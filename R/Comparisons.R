@@ -291,5 +291,5 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 30, qu
 
 Com1 <- ShotComparisonGraph2(OffTeam = HomeTeam, DefTeam = VisitorTeam, Seasondata = Seasondata , nbins = nbins, quant = quant, focus = focus)
 Com2 <- ShotComparisonGraph2(OffTeam = VisitorTeam, DefTeam = HomeTeam, Seasondata = Seasondata , nbins = nbins, quant = quant, focus = focus)
-return(list(GRAPH = grid.arrange(Com1, Com2)))
+return(grid.arrange(Com1, Com2))
 }
