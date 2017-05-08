@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' A raster grob used to plot the court in shot charts\n#'\n#' A rastergrob, grob y gDesc to use for ploting the court.\n#'\n#' @format A rastergrob, grob y gDesc to use for ploting the court.\n#' @seealso \\code{\\link[SpatialBall]{ShotSeasonGraph}}\n\n\"court\"\n\n#' A Boosted Regression Tree model to predict the spread\n#'\n#' A Boosted Regression Tree model to predict the spread\n#'\n#' @format A caret prediction model\n#' @seealso \\code{\\link[SpatialBall]{ShotSeasonGraph}}\n\n\"BRT\"\n",
+    "created" : 1494073663558.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3400990380",
+    "id" : "F55DBC39",
+    "lastKnownWriteTime" : 1494236652,
+    "last_content_update" : 1494236652381,
+    "path" : "~/Documents/SpatialBall/R/Data.R",
+    "project_path" : "R/Data.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
