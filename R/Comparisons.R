@@ -8,6 +8,7 @@
 #' (default is 30)
 #' @param HomeTeam Home Team
 #' @param VisitorTeam Visitor Team
+#' @param MAX_Y a numeric that limits the y axis of the shot chart
 #' @return a dataframe with the offensive apps, defensive apps and home spread
 #' @examples
 #' data("season2017")
@@ -22,18 +23,19 @@
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
-Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40){
+Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 861){
   ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = nbins) {
   #Filter the offensive data of the Offensive Team
+  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
   Off <- filter(Seasondata, TEAM_NAME == OffTeam)
   #Filter the Deffensive data of the Defensive team
   deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
   #Get the maximum and minumum values for x and y
-  xbnds <- range(c(Seasondata$LOC_X, deff$LOC_X))
-  ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y))
+  xbnds <- range(c(Seasondata$LOC_X, deff$LOC_X), na.rm = TRUE)
+  ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y), na.rm = TRUE)
   #Make hexbin dataframes out of the teams
   makeHexData <- function(df) {
-    h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+    h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
     data.frame(hcell2xy(h),
                PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -75,10 +77,15 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40){
   Comparison$Diff <- c(Comparison$PPS.x + Comparison$PPS.y)
 
 
-  PPSAA <- weighted.mean((Comparison$PPS.x + Comparison$PPS.y), Comparison$ST.x)
+  PPSAA <- weighted.mean((Comparison$PPS.x + Comparison$PPS.y), Comparison$ST.x, na.rm = TRUE)
+  Offa <- dplyr::filter(Seasondata, HTM == OffTeam | VTM == OffTeam)
+  OffCorrection <- nrow(dplyr::filter(Offa, TEAM_NAME == OffTeam))/nrow(dplyr::filter(Offa, TEAM_NAME != OffTeam))
+  Defa <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam)
+  DefCorrection <- nrow(dplyr::filter(Defa, TEAM_NAME != DefTeam))/nrow(dplyr::filter(Defa, TEAM_NAME == DefTeam))
+  PPSAAc = PPSAA*((OffCorrection*DefCorrection)/2)
 
 
-  return(PPSAA)
+  return(PPSAAc)
   }
   data("BRT")
   defAPPS <- ComparisonPPS(OffTeam = HomeTeam, DefTeam = VisitorTeam, Seasondata = Seasondata, nbins = nbins)
