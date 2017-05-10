@@ -31,8 +31,8 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 861)
   #Filter the Deffensive data of the Defensive team
   deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
   #Get the maximum and minumum values for x and y
-  xbnds <- range(c(Seasondata$LOC_X, deff$LOC_X), na.rm = TRUE)
-  ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y), na.rm = TRUE)
+  #xbnds <- range(c(Seasondata$LOC_X, deff$LOC_X), na.rm = TRUE)
+  #ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y), na.rm = TRUE)
   #Make hexbin dataframes out of the teams
   makeHexData <- function(df) {
     h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
@@ -51,13 +51,13 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 861)
   DeffbyCell <- merge(Totalhex, Defhex, by = "cid", all = T)
   OffByCell <- merge(Totalhex, Offhex, by = "cid", all = T)
   ##  when calculating the difference empty cells should count as 0
-  DeffbyCell$PPS.x[is.na(DeffbyCell$PPS.x)] <- 0
-  DeffbyCell$PPS.y[is.na(DeffbyCell$PPS.y)] <- 0
-  DeffbyCell$ST.y[is.na(DeffbyCell$ST.y)] <- 0
+  #DeffbyCell$PPS.x[is.na(DeffbyCell$PPS.x)] <- 0
+  #DeffbyCell$PPS.y[is.na(DeffbyCell$PPS.y)] <- 0
+  #DeffbyCell$ST.y[is.na(DeffbyCell$ST.y)] <- 0
 
-  OffByCell$PPS.x[is.na(OffByCell$PPS.x)] <- 0
-  OffByCell$PPS.y[is.na(OffByCell$PPS.y)] <- 0
-  OffByCell$ST.y[is.na(OffByCell$ST.y)] <- 0
+  #OffByCell$PPS.x[is.na(OffByCell$PPS.x)] <- 0
+  #OffByCell$PPS.y[is.na(OffByCell$PPS.y)] <- 0
+  #OffByCell$ST.y[is.na(OffByCell$ST.y)] <- 0
   #  make a "difference" data.frame
   DiffDeff <- data.frame(x = ifelse(is.na(DeffbyCell$x.x), DeffbyCell$x.y, DeffbyCell$x.x),
                          y = ifelse(is.na(DeffbyCell$y.x), DeffbyCell$y.y, DeffbyCell$y.x),
