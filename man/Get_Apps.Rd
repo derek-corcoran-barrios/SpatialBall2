@@ -4,7 +4,7 @@
 \alias{Get_Apps}
 \title{Calculate the Apps for an NBA matchup for a particular nba Season}
 \usage{
-Get_Apps(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 861)
+Get_Apps(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280)
 }
 \arguments{
 \item{HomeTeam}{Home Team}
