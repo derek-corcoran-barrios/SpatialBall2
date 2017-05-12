@@ -24,7 +24,7 @@
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280){
-  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = nbins, MAX_Y = MAX_Y) {
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 40, MAX_Y = 280) {
   #Filter the offensive data of the Offensive Team
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
   Off <- filter(Seasondata, TEAM_NAME == OffTeam)
