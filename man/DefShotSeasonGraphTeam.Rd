@@ -4,8 +4,8 @@
 \alias{DefShotSeasonGraphTeam}
 \title{plot the defensive shot chart of a team for an NBA Season}
 \usage{
-DefShotSeasonGraphTeam(Seasondata, team, nbins = 30, quant = 0.4,
-  type = "PPS", MAX_Y = 270)
+DefShotSeasonGraphTeam(Seasondata, team, nbins = 25, quant = 0.4,
+  type = "PPS", MAX_Y = 280)
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function
@@ -14,7 +14,7 @@ read_season}
 \item{team}{the team you which to plot the defensive shot charts of}
 
 \item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
+(default is 25)}
 
 \item{quant}{A number between 0 and 1, it determines quantile of shots used
 to plot the shot chart, (default is 0.4)}
@@ -23,7 +23,7 @@ to plot the shot chart, (default is 0.4)}
 Shot ("PPS") or percentage ("PCT")}
 
 \item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-270}
+280}
 }
 \value{
 a ggplot object plotting the defensive shot chart of a given team on
@@ -38,11 +38,11 @@ Shooting Percentage
 \examples{
 data("season2017")
 #Examples with several teams
-DefShotSeasonGraphTeam(season2017, team = "GSW",quant = 0.4)
-DefShotSeasonGraphTeam(season2017, team = "Hou",quant = 0.4)
-DefShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4)
+DefShotSeasonGraphTeam(season2017, team = "GSW")
+DefShotSeasonGraphTeam(season2017, team = "Hou")
+DefShotSeasonGraphTeam(season2017, team = "ORL")
 #Examples with shooting percentage instead of Points per Shot
-DefShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4, type = "PCT")
+DefShotSeasonGraphTeam(season2017, team = "ORL", type = "PCT")
 }
 \seealso{
 \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}

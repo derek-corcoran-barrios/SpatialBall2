@@ -2,11 +2,11 @@
 % Please edit documentation in R/Comparisons.R
 \name{ShotComparisonGraph}
 \alias{ShotComparisonGraph}
-\title{plot the comparative shot chart of the matchup of twon teams for an NBA
+\title{plot the comparative shot chart of the matchup of two teams for an NBA
 Season}
 \usage{
-ShotComparisonGraph(HomeTeam, VisitorTeam, Seasondata, nbins = 30,
-  quant = 0.4, focus = "all", MAX_Y = 270)
+ShotComparisonGraph(HomeTeam, VisitorTeam, Seasondata, nbins = 25,
+  quant = 0.4, focus = "all", MAX_Y = 280)
 }
 \arguments{
 \item{HomeTeam}{The home team in the match up}
@@ -17,7 +17,7 @@ ShotComparisonGraph(HomeTeam, VisitorTeam, Seasondata, nbins = 30,
 read_season}
 
 \item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
+(default is 25)}
 
 \item{quant}{A number between 0 and 1, it determines quantile of shots used
 to plot the shot chart, (default is 0.4)}
@@ -28,7 +28,7 @@ the character "all" (default) is specified, all shots will be ploted, if
 defense has the advantage}
 
 \item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-270}
+280}
 }
 \value{
 a ggplot object plotting the offensive shot chart of a given team on

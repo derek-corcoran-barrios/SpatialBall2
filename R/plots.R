@@ -13,12 +13,12 @@
 #' @param type A character to specify if the shot chart is based on Points per
 #' Shot ("PPS") or percentage ("PCT")
 #' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 270
+#' 280
 #' @return a ggplot object plotting the shot chart of a given NBA season
 #' @examples
 #' data("season2017")
-#' ShotSeasonGraph(season2017, quant = 0.4, MAX_Y = 270)
-#' ShotSeasonGraph(season2017, quant = 0.4, MAX_Y = 270, type = "PCT")
+#' ShotSeasonGraph(season2017, quant = 0.4)
+#' ShotSeasonGraph(season2017, quant = 0.4, type = "PCT")
 #' @seealso \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom dplyr filter
@@ -41,7 +41,7 @@
 #' @export
 
 
-ShotSeasonGraph <- function(Seasondata, nbins = 30, quant = 0.4, type = "PPS", MAX_Y = 270) {
+ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
   data("court")
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
   #Get the maximum and minumum values for x and y
@@ -95,7 +95,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 30, quant = 0.4, type = "PPS", M
 
   #Transform Hexbins into polygons
 
-  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 30*Totalhex$ST, 10*Totalhex$ST, size =1)
+  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 35*Totalhex$ST, 12*Totalhex$ST, size =1)
   Total$PPS <- rep(Totalhex$PPS, each = 6)
 
   #Make Graph
@@ -107,7 +107,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 30, quant = 0.4, type = "PPS", M
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270)) + xlim(c(-250, 250)) + theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250)) + theme(legend.position="bottom")
   }else{
     GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
       coord_fixed()  +theme(line = element_blank(),
@@ -116,7 +116,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 30, quant = 0.4, type = "PPS", M
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
   }
   if(type == "PPS"){
     GRAPH <- GRAPH +  ggtitle("Points per Shot")
@@ -174,7 +174,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 30, quant = 0.4, type = "PPS", M
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 
-OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, type = "PPS", MAX_Y = 270) {
+OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
   data("court")
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
   Seasondata <- dplyr::filter(Seasondata, TEAM_NAME == team)
@@ -229,7 +229,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
 
   #Transform Hexbins into polygons
 
-  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 30*Totalhex$ST, 10*Totalhex$ST, size =1)
+  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 35*Totalhex$ST, 12*Totalhex$ST, size =1)
   Total$PPS <- rep(Totalhex$PPS, each = 6)
 
   #Make Graph
@@ -241,7 +241,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270))+ theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ theme(legend.position="bottom")
   }else{
     GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
       coord_fixed()  +theme(line = element_blank(),
@@ -250,7 +250,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 270))+ theme(legend.position="bottom")}
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")}
   if(type == "PPS"){
     GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", team, sep =" "))
   }  else {GRAPH <- GRAPH +  ggtitle(paste("Shooting percentage", team, sep =" ")
@@ -270,23 +270,23 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
 #' read_season
 #' @param team the team you which to plot the defensive shot charts of
 #' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
+#' (default is 25)
 #' @param quant A number between 0 and 1, it determines quantile of shots used
 #' to plot the shot chart, (default is 0.4)
 #' @param type A character to specify if the shot chart is based on Points per
 #' Shot ("PPS") or percentage ("PCT")
 #' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 270
+#' 280
 #' @return a ggplot object plotting the defensive shot chart of a given team on
 #' an NBA season
 #' @examples
 #' data("season2017")
 #' #Examples with several teams
-#' DefShotSeasonGraphTeam(season2017, team = "GSW",quant = 0.4)
-#' DefShotSeasonGraphTeam(season2017, team = "Hou",quant = 0.4)
-#' DefShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4)
+#' DefShotSeasonGraphTeam(season2017, team = "GSW")
+#' DefShotSeasonGraphTeam(season2017, team = "Hou")
+#' DefShotSeasonGraphTeam(season2017, team = "ORL")
 #' #Examples with shooting percentage instead of Points per Shot
-#' DefShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4, type = "PCT")
+#' DefShotSeasonGraphTeam(season2017, team = "ORL", type = "PCT")
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}
 #' @importFrom dplyr filter
@@ -308,7 +308,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 
-DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, type = "PPS", MAX_Y = 270) {
+DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
   data("court")
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
   Seasondata <- dplyr::filter(Seasondata, HTM == team | VTM == team & TEAM_NAME != team)
@@ -363,7 +363,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
 
   #Transform Hexbins into polygons
 
-  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 30*Totalhex$ST, 10*Totalhex$ST, size =1)
+  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 35*Totalhex$ST, 12*Totalhex$ST, size =1)
   Total$PPS <- rep(Totalhex$PPS, each = 6)
 
   #Make Graph
@@ -374,7 +374,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270))+ theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ theme(legend.position="bottom")
   }else{
     GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(name = "Pct", midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
       coord_fixed()  +theme(line = element_blank(),
@@ -382,7 +382,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 270))+ theme(legend.position="bottom")}
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")}
     GRAPH <- GRAPH +  ggtitle(paste("Defensive shot chart of", team, sep =" "))
 
 
@@ -399,13 +399,13 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
 #' read_season
 #' @param player the player you which to plot the shot charts of
 #' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
+#' (default is 25)
 #' @param quant A number between 0 and 1, it determines quantile of shots used
 #' to plot the shot chart, (default is 0.4)
 #' @param type A character to specify if the shot chart is based on Points per
 #' Shot ("PPS") or percentage ("PCT")
 #' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 270
+#' 280
 #' @return a ggplot object plotting the defensive shot chart of a given team on
 #' an NBA season
 #' @examples
@@ -441,7 +441,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 30, quant = 0.4, ty
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 #'
-OffShotSeasonGraphPlayer <- function(Seasondata, player, nbins = 30, quant = 0.4, type = "PPS", MAX_Y = 270) {
+OffShotSeasonGraphPlayer <- function(Seasondata, player, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
   data("court")
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
 Seasondata <- dplyr::filter(Seasondata, PLAYER_NAME == player)
@@ -496,7 +496,7 @@ hex_coord_df <- function(x, y, width, height, size = 1) {
 
 #Transform Hexbins into polygons
 
-Total <- hex_coord_df(Totalhex$x, Totalhex$y, 30*Totalhex$ST, 10*Totalhex$ST, size =1)
+Total <- hex_coord_df(Totalhex$x, Totalhex$y, 35*Totalhex$ST, 12*Totalhex$ST, size =1)
 Total$PPS <- rep(Totalhex$PPS, each = 6)
 
 #Make Graph
@@ -508,7 +508,7 @@ if(type == "PPS"){
                           axis.text.x = element_blank(),
                           axis.text.y = element_blank(),
                           legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
+                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
 }else{
   GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
     coord_fixed()  +theme(line = element_blank(),
@@ -517,7 +517,7 @@ if(type == "PPS"){
                           axis.text.x = element_blank(),
                           axis.text.y = element_blank(),
                           legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 270))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
+                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
 }
 if(type == "PPS"){
   GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", player, sep =" "))
@@ -559,7 +559,7 @@ return(GRAPH)
 
 PointShotSeasonGraph <- function(Seasondata) {
   data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 270)
+  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
   Seasondata$SHOT_MADE_FLAG <- ifelse(Seasondata$SHOT_MADE_FLAG == "1", "Made", "Missed")
   Seasondata$SHOT_MADE_FLAG <- as.factor(Seasondata$SHOT_MADE_FLAG)
   #Make Graph
@@ -570,7 +570,7 @@ PointShotSeasonGraph <- function(Seasondata) {
                           axis.text.x = element_blank(),
                           axis.text.y = element_blank(),
                           legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 270))+ theme(legend.position="bottom")
+                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")
   return(GRAPH)
 }
 
@@ -608,7 +608,7 @@ PointShotSeasonGraph <- function(Seasondata) {
 
 PointShotSeasonGraphTeam <- function(Seasondata, team) {
   data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 270)
+  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
   Seasondata <- dplyr::filter(Seasondata, TEAM_NAME == team)
   Seasondata$SHOT_MADE_FLAG <- ifelse(Seasondata$SHOT_MADE_FLAG == "1", "Made", "Missed")
   Seasondata$SHOT_MADE_FLAG <- as.factor(Seasondata$SHOT_MADE_FLAG)
@@ -620,6 +620,6 @@ PointShotSeasonGraphTeam <- function(Seasondata, team) {
                           axis.text.x = element_blank(),
                           axis.text.y = element_blank(),
                           legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 270))+ theme(legend.position="bottom")
+                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")
   return(GRAPH)
 }

@@ -5,7 +5,7 @@
 #' @param Seasondata The information of shots, it can be downloaded with function
 #' read_season
 #' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
+#' (default is 25)
 #' @param HomeTeam Home Team
 #' @param VisitorTeam Visitor Team
 #' @param MAX_Y a numeric that limits the y axis of the shot chart
@@ -23,8 +23,8 @@
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
-Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280){
-  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 40, MAX_Y = 280) {
+Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280){
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25, MAX_Y = 280) {
   #Filter the offensive data of the Offensive Team
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
   Off <- filter(Seasondata, TEAM_NAME == OffTeam)
@@ -96,7 +96,7 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280)
 #' @param Seasondata The information of shots, it can be downloaded with function
 #' read_season
 #' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
+#' (default is 25)
 #' @param MAX_Y a numeric that limits the y axis of the shot chart
 #' @return a dataframe with the Offensive, Defensive, and Net Spatial Rating for
 #' an NBA Season
@@ -112,7 +112,7 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280)
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
-SpatialRating <- function(Seasondata, nbins = 40, MAX_Y = 280){
+SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
   ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = nbins, MAX_Y = MAX_Y) {
     #Filter the offensive data of the Offensive Team
     Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
@@ -201,7 +201,7 @@ SpatialRating <- function(Seasondata, nbins = 40, MAX_Y = 280){
   return(netDF)
 }
 
-#' plot the comparative shot chart of the matchup of twon teams for an NBA
+#' plot the comparative shot chart of the matchup of two teams for an NBA
 #' Season
 #'
 #' This function takes an NBA season object and makes a comparative shot chart of
@@ -211,7 +211,7 @@ SpatialRating <- function(Seasondata, nbins = 40, MAX_Y = 280){
 #' @param HomeTeam The home team in the match up
 #' @param VisitorTeam The visitor team in the match up
 #' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
+#' (default is 25)
 #' @param quant A number between 0 and 1, it determines quantile of shots used
 #' to plot the shot chart, (default is 0.4)
 #' @param focus A character to specify where the shot chart will focus on, if
@@ -219,7 +219,7 @@ SpatialRating <- function(Seasondata, nbins = 40, MAX_Y = 280){
 #' "plus" the shots where the offense has the advantage, if minus, where the
 #' defense has the advantage
 #' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 270
+#' 280
 #' @return a ggplot object plotting the offensive shot chart of a given team on
 #' an NBA season
 #' @examples
@@ -253,8 +253,8 @@ SpatialRating <- function(Seasondata, nbins = 40, MAX_Y = 280){
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 
-ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 30, quant = 0.4, focus = "all", MAX_Y = 270){
-  ShotComparisonGraph2 <- function(OffTeam, DefTeam, Seasondata, nbins = 30, quant = 0.4, focus = "all", MAX_Y = 270) {
+ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all", MAX_Y = 280){
+  ShotComparisonGraph2 <- function(OffTeam, DefTeam, Seasondata, nbins = nbins, quant = 0.4, focus = focus, MAX_Y = MAX_Y) {
   #Filter the offensive data of the Offensive Team
   data("court")
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)

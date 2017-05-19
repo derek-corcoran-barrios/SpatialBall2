@@ -4,8 +4,8 @@
 \alias{OffShotSeasonGraphTeam}
 \title{plot the offensive shot chart of a team for an NBA Season}
 \usage{
-OffShotSeasonGraphTeam(Seasondata, team, nbins = 30, quant = 0.4,
-  type = "PPS", MAX_Y = 270)
+OffShotSeasonGraphTeam(Seasondata, team, nbins = 25, quant = 0.4,
+  type = "PPS", MAX_Y = 280)
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function

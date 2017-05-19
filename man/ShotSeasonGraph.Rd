@@ -4,8 +4,8 @@
 \alias{ShotSeasonGraph}
 \title{plot the shot chart of a whole NBA Season}
 \usage{
-ShotSeasonGraph(Seasondata, nbins = 30, quant = 0.4, type = "PPS",
-  MAX_Y = 270)
+ShotSeasonGraph(Seasondata, nbins = 25, quant = 0.4, type = "PPS",
+  MAX_Y = 280)
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function
@@ -21,7 +21,7 @@ to plot the shot chart, (default is 0.4)}
 Shot ("PPS") or percentage ("PCT")}
 
 \item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-270}
+280}
 }
 \value{
 a ggplot object plotting the shot chart of a given NBA season
@@ -34,8 +34,8 @@ Shooting Percentage
 }
 \examples{
 data("season2017")
-ShotSeasonGraph(season2017, quant = 0.4, MAX_Y = 270)
-ShotSeasonGraph(season2017, quant = 0.4, MAX_Y = 270, type = "PCT")
+ShotSeasonGraph(season2017, quant = 0.4)
+ShotSeasonGraph(season2017, quant = 0.4, type = "PCT")
 }
 \seealso{
 \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}

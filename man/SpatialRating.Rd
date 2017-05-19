@@ -5,14 +5,14 @@
 \title{Calculate the Offensive, Defensive, and Net Spatial Rating for a particular
 NBA Season}
 \usage{
-SpatialRating(Seasondata, nbins = 40, MAX_Y = 280)
+SpatialRating(Seasondata, nbins = 25, MAX_Y = 280)
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function
 read_season}
 
 \item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
+(default is 25)}
 
 \item{MAX_Y}{a numeric that limits the y axis of the shot chart}
 }

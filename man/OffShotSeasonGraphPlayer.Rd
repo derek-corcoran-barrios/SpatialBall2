@@ -4,8 +4,8 @@
 \alias{OffShotSeasonGraphPlayer}
 \title{plot the shot chart of a player for an NBA Season}
 \usage{
-OffShotSeasonGraphPlayer(Seasondata, player, nbins = 30, quant = 0.4,
-  type = "PPS", MAX_Y = 270)
+OffShotSeasonGraphPlayer(Seasondata, player, nbins = 25, quant = 0.4,
+  type = "PPS", MAX_Y = 280)
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function
@@ -14,7 +14,7 @@ read_season}
 \item{player}{the player you which to plot the shot charts of}
 
 \item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
+(default is 25)}
 
 \item{quant}{A number between 0 and 1, it determines quantile of shots used
 to plot the shot chart, (default is 0.4)}
@@ -23,7 +23,7 @@ to plot the shot chart, (default is 0.4)}
 Shot ("PPS") or percentage ("PCT")}
 
 \item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-270}
+280}
 }
 \value{
 a ggplot object plotting the defensive shot chart of a given team on

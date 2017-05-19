@@ -4,7 +4,7 @@
 \alias{Get_Apps}
 \title{Calculate the Apps for an NBA matchup for a particular nba Season}
 \usage{
-Get_Apps(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280)
+Get_Apps(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
 }
 \arguments{
 \item{HomeTeam}{Home Team}
@@ -15,7 +15,7 @@ Get_Apps(HomeTeam, VisitorTeam, Seasondata, nbins = 40, MAX_Y = 280)
 read_season}
 
 \item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
+(default is 25)}
 
 \item{MAX_Y}{a numeric that limits the y axis of the shot chart}
 }
