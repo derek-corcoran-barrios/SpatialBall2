@@ -86,7 +86,6 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
   return(data.frame(defAPPS = defAPPS, offAPPS= offAPPS, spread = spread))
 }
 
-#####################################################
 
 #' Calculate the Offensive, Defensive, and Net Spatial Rating for a particular
 #' NBA Season
@@ -254,7 +253,7 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 #' @export
 
 ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all", MAX_Y = 280){
-  ShotComparisonGraph2 <- function(OffTeam, DefTeam, Seasondata, nbins = nbins, quant = 0.4, focus = focus, MAX_Y = MAX_Y) {
+  ShotComparisonGraph2 <- function(OffTeam, DefTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all", MAX_Y = 280) {
   #Filter the offensive data of the Offensive Team
   data("court")
   Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
@@ -321,11 +320,11 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
   #Function to transform hexbins into polygons
   hex_coord_df <- function(x, y, width, height, size = 1) {
     # like hex_coord but returns a dataframe of vertices grouped by an id variable
-    dx <- log(size * width / 6)
-    dy <- log(size * height / 2 / sqrt(3))
+    dx <- size * width / 6
+    dy <- size * height / 2 / sqrt(3)
 
-    hex_x <- rbind(x - 2 * dx, x - dx, x + dx, x + 2 * dx, x + dx, x - dx)
-    hex_y <- rbind(y, y + dy, y + dy, y, y - dy, y - dy)
+    hex_y <- rbind(y - 2 * dy, y - dy, y + dy, y + 2 * dy, y + dy, y - dy)
+    hex_x <- rbind(x, x + dx, x + dx, x, x - dx, x - dx)
     id    <- rep(1:length(x), each=6)
 
     data.frame(cbind(x=as.vector(hex_x), y=as.vector(hex_y), id))
@@ -334,31 +333,76 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
   #Filter by quantile and focus
   if (focus == "all") {
     DiffOff <- filter(DiffOff, ST > quantile(DiffOff$ST, probs = quant))
+    DiffOff$ST <- ifelse(DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                               1))))
     DiffDeff <- filter(DiffDeff, ST > quantile(DiffDeff$ST, probs = quant))
+    DiffDeff$ST <- ifelse(DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                               1))))
     Comparison <- filter(Comparison, ST.x > quantile(Comparison$ST.x, probs = quant))
+    Comparison$ST.x <- ifelse(Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                               1))))
   }
   if (focus == "plus"){
     DiffOff <- filter(DiffOff, ST > quantile(DiffOff$ST, probs = quant))
+    DiffOff$ST <- ifelse(DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                         ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                       ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                              1))))
     DiffDeff <- filter(DiffDeff, ST > quantile(DiffDeff$ST, probs = quant))
+    DiffDeff$ST <- ifelse(DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                               1))))
     Comparison <- filter(Comparison, ST.x > quantile(Comparison$ST.x, probs = quant))
     Comparison <- filter(Comparison, Diff >= 0)
+    Comparison$ST.x <- ifelse(Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                              ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                     ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                            ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                                   1))))
   }
 
   if (focus == "minus") {
     DiffOff <- filter(DiffOff, ST > quantile(DiffOff$ST, probs = quant))
+    DiffOff$ST <- ifelse(DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                         ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                       ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                              1))))
     DiffDeff <- filter(DiffDeff, ST > quantile(DiffDeff$ST, probs = quant))
+    DiffDeff$ST <- ifelse(DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                               1))))
     Comparison <- filter(Comparison, ST.x > quantile(Comparison$ST.x, probs = quant))
     Comparison <- filter(Comparison, Diff <= 0)
+    Comparison$ST.x <- ifelse(Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                              ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                     ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                            ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                                   1))))
   }
   #Transform Hexbins into polygons
 
-  DFOFF <- hex_coord_df(DiffOff$x, DiffOff$y, (0.05*DiffOff$ST), (0.05*DiffOff$ST), size =1)
+  DFOFF <- hex_coord_df(DiffOff$x, DiffOff$y, (35*DiffOff$ST), (12*DiffOff$ST), size =1)
   DFOFF$PPS <- rep(DiffOff$PPS, each = 6)
 
-  DFDEF <- hex_coord_df(DiffDeff$x, DiffDeff$y, DiffDeff$ST, DiffDeff$ST, size =1)
+  DFDEF <- hex_coord_df(DiffDeff$x, DiffDeff$y, 35*DiffDeff$ST, 12*DiffDeff$ST, size =1)
   DFDEF$PPS <- rep(DiffDeff$PPS, each = 6)
-
-  DFDIF <- hex_coord_df(Comparison$x.x, Comparison$y.x, (0.05*Comparison$ST.x),(0.05*Comparison$ST.x), size =1)
+  #140 y 48 para 8 bins aprox
+  DFDIF <- hex_coord_df(Comparison$x.x, Comparison$y.x, (35*Comparison$ST.x),(12*Comparison$ST.x), size =1)
   DFDIF$Dif <- rep(Comparison$Diff, each = 6)
 
   #Create Legend
