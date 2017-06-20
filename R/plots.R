@@ -241,7 +241,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
   }else{
     GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
       coord_fixed()  +theme(line = element_blank(),
@@ -250,7 +250,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")}
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")}
   if(type == "PPS"){
     GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", team, sep =" "))
   }  else {GRAPH <- GRAPH +  ggtitle(paste("Shooting percentage", team, sep =" ")
@@ -374,7 +374,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
   }else{
     GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(name = "Pct", midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
       coord_fixed()  +theme(line = element_blank(),
@@ -382,7 +382,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")}
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")}
     GRAPH <- GRAPH +  ggtitle(paste("Defensive shot chart of", team, sep =" "))
 
 
