@@ -3,6 +3,7 @@
 export(DefShotSeasonGraphTeam)
 export(Get_Apps)
 export(OffShotSeasonGraphPlayer)
+export(OffShotSeasonGraphPlayerEight)
 export(OffShotSeasonGraphTeam)
 export(PointShotSeasonGraph)
 export(PointShotSeasonGraphTeam)
