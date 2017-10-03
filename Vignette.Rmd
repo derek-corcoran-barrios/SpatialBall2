@@ -34,12 +34,30 @@ data("season2017")
 ShotSeasonGraph(Seasondata = season2017, type = "PCT")
 ```
 
-another option fot this function is the quantile threshold of which shots are ploted, the default is 0.4, that means that the 40% least common shots are not ploted, if we increase that number, less hexagons will be shown
+another option fot this function is the quantile threshold of which shots are ploted, the default is 0.4, that means that the 40% least common shots are not ploted, if we increase that number, less hexagons will be shown.
 
 ```{r}
 data("season2017")
 ShotSeasonGraph(Seasondata = season2017, type = "PCT", quant = 0.6)
 ```
+
+### Team visualization tools:
+
+We have 2 functions for the visualization of team shot charts `DefShotSeasonGraphTeam`and `OffShotSeasonGraphTeam`, both of them are similar to the `ShotSeasonGraph` function, but focus on one team, and let's you get the offensive or deffensive shot chart for each team in either Point per shot (type = "PPS") or percentage (type = "PCT").
+
+The following are examples of both functions:
+
+### DefShotSeasonGraphTeam:
+
+These are examples of Charlotte's deffensive Shot Charts as PPS and PCT
+
+```{r}
+DefShotSeasonGraphTeam(season2017, team = "Cha")
+DefShotSeasonGraphTeam(season2017, team = "Cha", type = "PCT")
+```
+
+### DefShotSeasonGraphTeam:
+
 
 ## Styles
 
