@@ -284,6 +284,113 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
   return(netDF)
 }
 
+#' Calculate the Offensive, Defensive, and Experimental Net Spatial Rating for a particular
+#' NBA Season
+#'
+#' This function takes an NBA season object and calculates the Offensive,
+#' Defensive, and Net Spatial Rating
+#' @param Seasondata The information of shots, it can be downloaded with function
+#' read_season
+#' @param nbins The number of bins the hexplot for the shot charts are made
+#' (default is 25)
+#' @param MAX_Y a numeric that limits the y axis of the shot chart
+#' @return a dataframe with the Offensive, Defensive, and Net Spatial Rating for
+#' an NBA Season
+#' @examples
+#' data("season2017")
+#' SpatialRating(Seasondata = season2017)
+#' @seealso \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}
+#' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
+#' @importFrom dplyr arrange
+#' @importFrom dplyr desc
+#' @importFrom dplyr filter
+#' @importFrom hexbin hcell2xy
+#' @importFrom hexbin hexbin
+#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
+#' @export
+
+ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25, MAX_Y = 280) {
+    #Filter the offensive data of the Offensive Team
+    Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+    Off <- filter(Seasondata, TEAM_NAME == OffTeam)
+    #Filter the Deffensive data of the Defensive team
+    deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
+    #Get the maximum and minumum values for x and y
+    #Make hexbin dataframes out of the teams
+    makeHexData <- function(df) {
+      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
+      data.frame(hcell2xy(h),
+                 PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
+                 ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
+                 cid = h@cell)
+    }
+    ##Total NBA data
+    Totalhex <- makeHexData(Seasondata)
+    Totalhex <- rename(Totalhex, TotalPPS = PPS, TotalST = ST)
+    ##Defensive team data
+    Defhex <- makeHexData(deff)
+    Defhex <- rename(Defhex, DefPPS = PPS, DefST = ST)
+    ##Offensive team data
+    Offhex <- makeHexData(Off)
+    Offhex <- rename(Offhex, OffPPS = PPS, OffST = ST)
+    #Merge offensive and deffensive data with total data by Cell id
+    DeffbyCell <- merge(Totalhex, Defhex, all = T)
+    OffbyCell <- merge(Totalhex, Offhex, all = T)
+    #  make a "difference" data.frame
+    DiffDeff <- mutate(DeffbyCell, DefPPS = DefPPS - TotalPPS)
+
+
+    DiffOff <-  mutate(OffbyCell, OffPPS = OffPPS - TotalPPS)
+
+    #make team comparisons
+    Comparison <- merge(DiffOff, DiffDeff, all = T)
+    Comparison <- mutate(Comparison, Diff = OffPPS + DefPPS + TotalPPS)
+
+
+    PPSAA <- weighted.mean(x = Comparison$Diff, w = (Comparison$OffST + Comparison$DefST), na.rm = TRUE)
+    Offa <- dplyr::filter(Seasondata, HTM == OffTeam | VTM == OffTeam)
+    OffCorrection <- nrow(dplyr::filter(Offa, TEAM_NAME == OffTeam))/nrow(dplyr::filter(Offa, TEAM_NAME != OffTeam))
+    Defa <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam)
+    DefCorrection <- nrow(dplyr::filter(Defa, TEAM_NAME != DefTeam))/nrow(dplyr::filter(Defa, TEAM_NAME == DefTeam))
+    PPSAAc = PPSAA*((OffCorrection+DefCorrection)/2)
+
+
+    return(PPSAAc)
+  }
+  df <- data.frame(matrix(ncol = 30, nrow = 30))
+  colnames(df) <- as.character(unique(Seasondata$TEAM_NAME))
+  rownames(df) <- as.character(unique(Seasondata$TEAM_NAME))
+
+  Offensive_teams <- as.character(unique(Seasondata$TEAM_NAME))
+  defenseve_names <- Offensive_teams
+
+  for (i in 1:length(Offensive_teams)) {
+    for (j in 1:length(defenseve_names)){
+      df[rownames(df) == defenseve_names[j],colnames(df) == Offensive_teams[i]] <- ComparisonPPS(OffTeam = Offensive_teams[i], DefTeam = defenseve_names[j], Seasondata = Seasondata, nbins = nbins, MAX_Y = MAX_Y)
+    }
+    print(paste(i, "of", length(Offensive_teams)))
+  }
+
+  ROWS <- sort(rownames(df))
+  COLS <- sort(colnames(df))
+  df2 <- df
+  for (i in 1:length(ROWS)) {
+    df[rownames(df) == COLS[i], colnames(df) == ROWS[i]] <- NA
+  }
+
+  offrating <- colMeans(df, na.rm = TRUE)*50
+  defrating <- rowMeans(df, na.rm = TRUE)*-50
+
+  offratingDF <- data.frame(Team = colnames(df), offrating = offrating)
+  defratingDF <- data.frame(Team = rownames(df), defrating = defrating)
+
+  netDF <- merge.data.frame(offratingDF, defratingDF)
+  netDF$netrating <- netDF$offrating + netDF$defrating
+  netDF <- arrange(netDF, desc(netrating))
+  return(netDF)
+}
+
 #' plot the comparative shot chart of the matchup of two teams for an NBA
 #' Season
 #'
