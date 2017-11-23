@@ -86,6 +86,88 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
   return(data.frame(defAPPS = defAPPS, offAPPS= offAPPS, spread = spread))
 }
 
+#' Calculate the Experimental Apps for an NBA matchup for a particular nba Season
+#'
+#' This function takes an NBA season object and calculates de Apps for a
+#' particular matchup, this is the development version that will become the GetApps.
+#' @param Seasondata The information of shots, it can be downloaded with function
+#' read_season
+#' @param nbins The number of bins the hexplot for the shot charts are made
+#' (default is 25)
+#' @param HomeTeam Home Team
+#' @param VisitorTeam Visitor Team
+#' @param MAX_Y a numeric that limits the y axis of the shot chart
+#' @return a dataframe with the offensive apps, defensive apps and home spread
+#' @examples
+#' data("season2017")
+#' Get_Apps_Exp(HomeTeam = "Bos", VisitorTeam = "Was", Seasondata = season2017)
+#' Get_Apps_Exp(HomeTeam = "GSW", VisitorTeam = "Cle", Seasondata = season2017)
+#' Get_Apps_Exp(HomeTeam = "Cle", VisitorTeam = "GSW", Seasondata = season2017)
+#' @seealso \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}
+#' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
+#' @importFrom caret predict.train
+#' @importFrom dplyr filter
+#' @importFrom hexbin hcell2xy
+#' @importFrom hexbin hexbin
+#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
+#' @export
+Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280){
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25, MAX_Y = 280) {
+    #Filter the offensive data of the Offensive Team
+    Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+    Off <- filter(Seasondata, TEAM_NAME == OffTeam)
+    #Filter the Deffensive data of the Defensive team
+    deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
+    #Get the maximum and minumum values for x and y
+    #Make hexbin dataframes out of the teams
+    makeHexData <- function(df) {
+      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
+      data.frame(hcell2xy(h),
+                 PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
+                 ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
+                 cid = h@cell)
+    }
+    ##Total NBA data
+    Totalhex <- makeHexData(Seasondata)
+    Totalhex <- rename(Totalhex, TotalPPS = PPS, TotalST = ST)
+    ##Defensive team data
+    Defhex <- makeHexData(deff)
+    Defhex <- rename(Defhex, DefPPS = PPS, DefST = ST)
+    ##Offensive team data
+    Offhex <- makeHexData(Off)
+    Offhex <- rename(Offhex, OffPPS = PPS, OffST = ST)
+    #Merge offensive and deffensive data with total data by Cell id
+    DeffbyCell <- merge(Totalhex, Defhex, all = T)
+    OffbyCell <- merge(Totalhex, Offhex, all = T)
+    #  make a "difference" data.frame
+    DiffDeff <- mutate(DeffbyCell, DefPPS = DefPPS - TotalPPS)
+
+
+    DiffOff <-  mutate(OffbyCell, OffPPS = OffPPS - TotalPPS)
+
+    #make team comparisons
+    Comparison <- merge(DiffOff, DiffDeff, all = T)
+    Comparison <- mutate(Comparison, Diff = OffPPS + DefPPS + TotalPPS)
+
+
+    PPSAA <- weighted.mean(x = Comparison$Diff, w = (Comparison$OffST + Comparison$DefST), na.rm = TRUE)
+    Offa <- dplyr::filter(Seasondata, HTM == OffTeam | VTM == OffTeam)
+    OffCorrection <- nrow(dplyr::filter(Offa, TEAM_NAME == OffTeam))/nrow(dplyr::filter(Offa, TEAM_NAME != OffTeam))
+    Defa <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam)
+    DefCorrection <- nrow(dplyr::filter(Defa, TEAM_NAME != DefTeam))/nrow(dplyr::filter(Defa, TEAM_NAME == DefTeam))
+    PPSAAc = PPSAA*((OffCorrection+DefCorrection)/2)
+
+
+    return(PPSAAc)
+  }
+  data("BRT")
+  defAPPS <- ComparisonPPS(OffTeam = HomeTeam, DefTeam = VisitorTeam, Seasondata = Seasondata, nbins = nbins)
+  offAPPS <- ComparisonPPS(OffTeam = VisitorTeam, DefTeam = HomeTeam, Seasondata = Seasondata, nbins = nbins)
+  spread <- predict(BRT, data.frame(defAPPS = defAPPS, offAPPS = offAPPS))
+  return(data.frame(defAPPS = defAPPS, offAPPS= offAPPS, spread = spread))
+}
+
+
 
 #' Calculate the Offensive, Defensive, and Net Spatial Rating for a particular
 #' NBA Season
