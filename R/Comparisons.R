@@ -107,6 +107,8 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom caret predict.train
 #' @importFrom dplyr filter
+#' @importFrom dplyr mutate
+#' @importFrom dplyr rename
 #' @importFrom hexbin hcell2xy
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
