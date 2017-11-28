@@ -118,6 +118,8 @@ Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 
     #Filter the offensive data of the Offensive Team
     Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
     Off <- filter(Seasondata, TEAM_NAME == OffTeam)
+    N <- filter(Seasondata, HTM == OffTeam | VTM == OffTeam) %>% group_by(GAME_ID) %>% summarize(N = n()) %>% summarize(N = mean(N))
+    N <- N$N
     #Filter the Deffensive data of the Defensive team
     deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
     #Get the maximum and minumum values for x and y
@@ -160,15 +162,14 @@ Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 
     PPSAAc = PPSAA*((OffCorrection+DefCorrection)/2)
 
 
-    return(PPSAAc)
+    return(data.frame(PPSAAc=PPSAAc, N = N))
   }
-  data("BRT")
-  defAPPS <- ComparisonPPS(OffTeam = HomeTeam, DefTeam = VisitorTeam, Seasondata = Seasondata, nbins = nbins)
-  offAPPS <- ComparisonPPS(OffTeam = VisitorTeam, DefTeam = HomeTeam, Seasondata = Seasondata, nbins = nbins)
-  spread <- predict(BRT, data.frame(defAPPS = defAPPS, offAPPS = offAPPS))
-  return(data.frame(defAPPS = defAPPS, offAPPS= offAPPS, spread = spread))
+  #data("BRT")
+  HomeExPPS <- ComparisonPPS(OffTeam = HomeTeam, DefTeam = VisitorTeam, Seasondata = Seasondata, nbins = nbins)
+  VisitorExPPS <- ComparisonPPS(OffTeam = VisitorTeam, DefTeam = HomeTeam, Seasondata = Seasondata, nbins = nbins)
+  #spread <- predict(BRT, data.frame(defAPPS = defAPPS, offAPPS = offAPPS))
+  return(data.frame(VisitorExPPS = VisitorExPPS$PPSAAc, HomeExPPS= HomeExPPS$PPSAAc, N = (HomeExPPS$N + VisitorExPPS$N)/2, Diff =(VisitorExPPS$PPSAAc-HomeExPPS$PPSAAc)))
 }
-
 
 
 #' Calculate the Offensive, Defensive, and Net Spatial Rating for a particular
@@ -195,6 +196,7 @@ Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
+
 SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
   ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = nbins, MAX_Y = MAX_Y) {
     #Filter the offensive data of the Offensive Team
@@ -379,14 +381,14 @@ ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
     df[rownames(df) == COLS[i], colnames(df) == ROWS[i]] <- NA
   }
 
-  offrating <- colMeans(df, na.rm = TRUE)*50
-  defrating <- rowMeans(df, na.rm = TRUE)*-50
+  offrating <- colMeans(df, na.rm = TRUE)*100
+  defrating <- rowMeans(df, na.rm = TRUE)*100
 
   offratingDF <- data.frame(Team = colnames(df), offrating = offrating)
   defratingDF <- data.frame(Team = rownames(df), defrating = defrating)
 
   netDF <- merge.data.frame(offratingDF, defratingDF)
-  netDF$netrating <- netDF$offrating + netDF$defrating
+  netDF$netrating <- netDF$offrating - netDF$defrating
   netDF <- arrange(netDF, desc(netrating))
   return(netDF)
 }
