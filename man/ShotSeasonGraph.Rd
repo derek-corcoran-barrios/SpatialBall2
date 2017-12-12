@@ -4,24 +4,17 @@
 \alias{ShotSeasonGraph}
 \title{plot the shot chart of a whole NBA Season}
 \usage{
-ShotSeasonGraph(Seasondata, nbins = 25, quant = 0.4, type = "PPS",
-  MAX_Y = 280)
+ShotSeasonGraph(Seasondata, quant = 0.4, type = "PPS")
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function
 read_season}
-
-\item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
 
 \item{quant}{A number between 0 and 1, it determines quantile of shots used
 to plot the shot chart, (default is 0.4)}
 
 \item{type}{A character to specify if the shot chart is based on Points per
 Shot ("PPS") or percentage ("PCT")}
-
-\item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-280}
 }
 \value{
 a ggplot object plotting the shot chart of a given NBA season

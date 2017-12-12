@@ -6,14 +6,10 @@
 #' Shooting Percentage
 #' @param Seasondata The information of shots, it can be downloaded with function
 #' read_season
-#' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
 #' @param quant A number between 0 and 1, it determines quantile of shots used
 #' to plot the shot chart, (default is 0.4)
 #' @param type A character to specify if the shot chart is based on Points per
 #' Shot ("PPS") or percentage ("PCT")
-#' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 280
 #' @return a ggplot object plotting the shot chart of a given NBA season
 #' @examples
 #' data("season2017")
@@ -22,7 +18,7 @@
 #' @seealso \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 aes_string
 #' @importFrom ggplot2 annotation_custom
 #' @importFrom ggplot2 coord_fixed
 #' @importFrom ggplot2 element_blank
@@ -41,9 +37,9 @@
 #' @export
 
 
-ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+ShotSeasonGraph <- function(Seasondata, quant = 0.4, type = "PPS") {
+  LOC_Y <- ST <- NULL
+  Seasondata <- filter(Seasondata, LOC_Y < 280)
   #Get the maximum and minumum values for x and y
   xbnds <- range(Seasondata$LOC_X)
   ybnds <- range(Seasondata$LOC_Y)
@@ -51,7 +47,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", M
 
   if (type == "PPS"){
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -61,7 +57,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", M
 
   if (type == "PCT"){
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG)), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -100,7 +96,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", M
 
   #Make Graph
   if(type == "PPS"){
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
       coord_fixed()  +theme(line = element_blank(),
                             axis.title.x = element_blank(),
                             axis.title.y = element_blank(),
@@ -109,7 +105,7 @@ ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", M
                             legend.title = element_blank(),
                             plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250)) + theme(legend.position="bottom")
   }else{
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
       coord_fixed()  +theme(line = element_blank(),
                             axis.title.x = element_blank(),
                             axis.title.y = element_blank(),
@@ -126,37 +122,26 @@ ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", M
   return(GRAPH)
 }
 
-#' plot the offensive shot chart of a team for an NBA Season
+#' Generates a shot chart for a given player
 #'
-#' This function takes an NBA season object and makes a shot chart of all the
-#' shots takes through that regular season.
-#' You can choose to either plot the results based on Points per Shot or on
-#' Shooting Percentage
-#' @param Seasondata The information of shots, it can be downloaded with function
-#' read_season
-#' @param team the team you which to plot the shot charts of
-#' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 30)
-#' @param quant A number between 0 and 1, it determines quantile of shots used
-#' to plot the shot chart, (default is 0.4)
-#' @param type A character to specify if the shot chart is based on Points per
-#' Shot ("PPS") or percentage ("PCT")
-#' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 270
-#' @return a ggplot object plotting the offensive shot chart of a given team on
-#' an NBA season
+#' Creates a shot chart for a player on a given season
+#' @param Seasondata a data frame with the details of the season
+#' @param player the name of the player that you want to make a graph of
+#' @param quant the quantile of shots to be graphed, defaults to 0.4
+#' @param type either "PPS" for points per shot or "PCT" for percentage
+#' @return a shot chart graph
 #' @examples
 #' data("season2017")
-#' #Examples with several teams
-#' OffShotSeasonGraphTeam(season2017, team = "GSW",quant = 0.4)
-#' OffShotSeasonGraphTeam(season2017, team = "Hou",quant = 0.4)
-#' OffShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4)
-#' #Examples with shooting percentage instead of Points per Shot
-#' OffShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4, type = "PCT")
-#' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}#' @importFrom dplyr filter
+#' #Examples with several players
+#' ShotSeasonGraphPlayer(season2017, player = "Stephen Curry")
+#' ShotSeasonGraphPlayer(season2017, player = "DeMar DeRozan")
+#'
+#'  #Examples with percentage instead of points per shot
+#' ShotSeasonGraphPlayer(season2017, player = "Stephen Curry", type = "PCT")
 #' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
+#' @importFrom hexbin hcell2xy
+#' @importFrom hexbin hexbin
+#' @importFrom ggplot2 aes_string
 #' @importFrom ggplot2 annotation_custom
 #' @importFrom ggplot2 coord_fixed
 #' @importFrom ggplot2 element_blank
@@ -168,24 +153,23 @@ ShotSeasonGraph <- function(Seasondata, nbins = 25, quant = 0.4, type = "PPS", M
 #' @importFrom ggplot2 theme
 #' @importFrom ggplot2 xlim
 #' @importFrom ggplot2 ylim
-#' @importFrom hexbin hcell2xy
-#' @importFrom hexbin hexbin
 #' @importFrom stats quantile
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
+#'
 
-OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
-  Seasondata <- dplyr::filter(Seasondata, TEAM_NAME == team)
+ShotSeasonGraphPlayer <- function(Seasondata, player, quant = 0.4, type = "PPS") {
+  LOC_Y <- PLAYER_NAME <- ST <- NULL
+  Seasondata <- filter(Seasondata, LOC_Y < 280)
+  Seasondata <- filter(Seasondata, PLAYER_NAME == player)
   #Get the maximum and minumum values for x and y
   xbnds <- range(Seasondata$LOC_X)
   ybnds <- range(Seasondata$LOC_Y)
-  #Make hexbin dataframes out of the teams
+  #Make hexbin dataframes out of the players
 
   if (type == "PPS"){
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -195,7 +179,7 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
 
   if (type == "PCT"){
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG)), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -234,22 +218,228 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
 
   #Make Graph
   if(type == "PPS"){
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(name = "PPS", midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
       coord_fixed()  +theme(line = element_blank(),
                             axis.title.x = element_blank(),
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
-                            legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
   }else{
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(name = "PCT",midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1), breaks =c(0,0.5,1), labels =c("0%","50%","100%")) +
+      coord_fixed()  +theme(line = element_blank(),
+                            axis.title.x = element_blank(),
+                            axis.title.y = element_blank(),
+                            axis.text.x = element_blank(),
+                            axis.text.y = element_blank(),
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
+  }
+  if(type == "PPS"){
+    GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", player, sep =" "))
+  }  else {GRAPH <- GRAPH +  ggtitle(paste("Shooting percentage", player, sep =" ")
+  )}
+
+
+  return(GRAPH)
+}
+
+#' Generates a point based shot chart for a given player
+#'
+#' Creates a shot chart for a player on a given season creating a point
+#' for each taken shot separating by colors mades and misses, also as you
+#' can add a kernel of the frequency of usage of areas
+#' @param Seasondata a data frame with the details of the season
+#' @param player the name of the player that you want to make a graph of
+#' @param Type either "Both" (default), for plotting every point, "Made"
+#' to plot only the
+#' made shots or "Missed" to plot only the missed shots.
+#' @param kernel Logical, weather to plot or not the kernel of shots
+#' @return a shot chart graph
+#' @examples
+#' data("season2017")
+#' #Examples with several players
+#' PointShotSeasonGraphPlayer(season2017, player = "James Harden")
+#' PointShotSeasonGraphPlayer(season2017, player = "DeMar DeRozan")
+#'
+#' PointShotSeasonGraphPlayer(season2017, player = "Stephen Curry", kernel = FALSE)
+#' @importFrom dplyr filter
+#' @importFrom ggplot2 aes_string
+#' @importFrom ggplot2 annotation_custom
+#' @importFrom ggplot2 coord_fixed
+#' @importFrom ggplot2 element_blank
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 geom_point
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 scale_fill_gradientn
+#' @importFrom ggplot2 stat_density_2d
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 xlim
+#' @importFrom ggplot2 ylim
+#' @importFrom RColorBrewer brewer.pal
+#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
+#' @export
+#'
+
+PointShotSeasonGraphPlayer <- function(Seasondata, player, Type = "Both", kernel = TRUE) {
+  LOC_Y <- LOC_X <- PLAYER_NAME <- SHOT_MADE_FLAG <- NULL
+  Seasondata <- filter(Seasondata, LOC_Y < 280 & LOC_Y > -40)
+  Seasondata <- filter(Seasondata, LOC_X < 250 & LOC_X > -250)
+  Seasondata <- filter(Seasondata, PLAYER_NAME == player)
+  Seasondata$SHOT_MADE_FLAG <- ifelse(Seasondata$SHOT_MADE_FLAG == "1", "Made", "Missed")
+  Seasondata$SHOT_MADE_FLAG <- as.factor(Seasondata$SHOT_MADE_FLAG)
+  if (Type == "Made"){
+    Seasondata2 <-filter(Seasondata, SHOT_MADE_FLAG == "Made")
+  }
+
+  if (Type == "Missed"){
+    Seasondata2 <- filter(Seasondata, SHOT_MADE_FLAG == "Missed")
+  }
+
+  if (Type == "Both"){
+    Seasondata2 <- Seasondata
+  }
+
+  #Make Graph
+  if (kernel == TRUE){
+    GRAPH <- ggplot(Seasondata2, aes_string(x="LOC_X", y = "LOC_Y"))+ annotation_custom(court, -250, 250, -52, 418)  +
+      stat_density_2d(aes_string(fill = "..level.."), geom = "polygon", show.legend = FALSE, alpha = 0.3) + geom_point(aes_string(color = "SHOT_MADE_FLAG"), alpha = 0.8) + scale_fill_gradientn(
+        colours = rev(brewer.pal( 7, "Spectral"))
+      ) +
       coord_fixed()  +theme(line = element_blank(),
                             axis.title.x = element_blank(),
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             legend.title = element_blank(),
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
+  }
+  if (kernel == FALSE){
+    GRAPH <- ggplot(Seasondata2, aes_string(x="LOC_X", y = "LOC_Y"))+ annotation_custom(court, -250, 250, -52, 418) +
+      geom_point(aes_string(color = "SHOT_MADE_FLAG"), alpha = 0.8) +
+      coord_fixed()  +theme(line = element_blank(),
+                            axis.title.x = element_blank(),
+                            axis.title.y = element_blank(),
+                            axis.text.x = element_blank(),
+                            axis.text.y = element_blank(),
+                            legend.title = element_blank(),
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
+  }
+  return(GRAPH)
+}
+
+
+#' Generates an offensive shot chart for a given team
+#'
+#' creates an offensive Shot Chart for the desired team on a given season
+#' @param Seasondata a data frame with the details of the season
+#' @param team the name of the team that you want to make a graph of
+#' @param quant the quantile of shots to be graphed, defaults to 0.4
+#' @param type either "PPS" for points per shot or "PCT" for percentage
+#' @return a shot chart graph
+#' @examples
+#' data("season2017")
+#' #Examples with several teams
+#' OffShotSeasonGraphTeam(season2017, team = "GSW")
+#' OffShotSeasonGraphTeam(season2017, team = "Hou")
+#' #Examples with shooting percentage instead of Points per Shot
+#' OffShotSeasonGraphTeam(season2017, team = "ORL", type = "PCT")
+#' @importFrom dplyr filter
+#' @importFrom hexbin hcell2xy
+#' @importFrom hexbin hexbin
+#' @importFrom ggplot2 aes_string
+#' @importFrom ggplot2 annotation_custom
+#' @importFrom ggplot2 coord_fixed
+#' @importFrom ggplot2 element_blank
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 geom_polygon
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 scale_fill_gradient2
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 xlim
+#' @importFrom ggplot2 ylim
+#' @importFrom stats quantile
+#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
+#' @export
+#'
+
+OffShotSeasonGraphTeam<- function(Seasondata, team, quant = 0.4, type = "PPS") {
+  LOC_Y <- TEAM_NAME <- ST <- NULL
+  Seasondata <- filter(Seasondata, LOC_Y < 280)
+  Seasondata <- filter(Seasondata, TEAM_NAME == team)
+  #Get the maximum and minumum values for x and y
+  xbnds <- range(Seasondata$LOC_X)
+  ybnds <- range(Seasondata$LOC_Y)
+  #Make hexbin dataframes out of the teams
+
+  if (type == "PPS"){
+    makeHexData <- function(df) {
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      data.frame(hcell2xy(h),
+                 PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
+                 ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
+                 cid = h@cell)
+    }
+  }
+
+  if (type == "PCT"){
+    makeHexData <- function(df) {
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      data.frame(hcell2xy(h),
+                 PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG)), h@cID, FUN = function(z) sum(z)/length(z)),
+                 ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
+                 cid = h@cell)
+    }
+  }
+
+
+  ##Total NBA data
+  Totalhex <- makeHexData(Seasondata)
+  Totalhex <- filter(Totalhex, ST > quantile(Totalhex$ST, probs = quant))
+  Totalhex$ST <- ifelse(Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                        ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                               ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                      ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+                                             1))))
+
+
+  #Function to transform hexbins into polygons
+  hex_coord_df <- function(x, y, width, height, size = 1) {
+    # like hex_coord but returns a dataframe of vertices grouped by an id variable
+    dx <- size * width / 6
+    dy <- size * height / 2 / sqrt(3)
+
+    hex_y <- rbind(y - 2 * dy, y - dy, y + dy, y + 2 * dy, y + dy, y - dy)
+    hex_x <- rbind(x, x + dx, x + dx, x, x - dx, x - dx)
+    id    <- rep(1:length(x), each=6)
+
+    data.frame(cbind(x=as.vector(hex_x), y=as.vector(hex_y), id))
+  }
+
+  #Transform Hexbins into polygons
+
+  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 35*Totalhex$ST, 12*Totalhex$ST, size =1)
+  Total$PPS <- rep(Totalhex$PPS, each = 6)
+
+  #Make Graph
+
+  if(type == "PPS"){
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(name = "PPS", midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
+      coord_fixed()  +theme(line = element_blank(),
+                            axis.title.x = element_blank(),
+                            axis.title.y = element_blank(),
+                            axis.text.x = element_blank(),
+                            axis.text.y = element_blank(),
+                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
+
+  }else{
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(name= "PCT",midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1), breaks =c(0,0.5,1), labels =c("0%","50%","100%")) +
+      coord_fixed()  +theme(line = element_blank(),
+                            axis.title.x = element_blank(),
+                            axis.title.y = element_blank(),
+                            axis.text.x = element_blank(),
+                            axis.text.y = element_blank(),
                             plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")}
   if(type == "PPS"){
     GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", team, sep =" "))
@@ -260,37 +450,27 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
   return(GRAPH)
 }
 
-#' plot the defensive shot chart of a team for an NBA Season
+
+#' Generates an defensive shot chart for a given team
 #'
-#' This function takes an NBA season object and makes a shot chart of all the
-#' shots takes through that regular season.
-#' You can choose to either plot the results based on Points per Shot or on
-#' Shooting Percentage
-#' @param Seasondata The information of shots, it can be downloaded with function
-#' read_season
-#' @param team the team you which to plot the defensive shot charts of
-#' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 25)
-#' @param quant A number between 0 and 1, it determines quantile of shots used
-#' to plot the shot chart, (default is 0.4)
-#' @param type A character to specify if the shot chart is based on Points per
-#' Shot ("PPS") or percentage ("PCT")
-#' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 280
-#' @return a ggplot object plotting the defensive shot chart of a given team on
-#' an NBA season
+#' Creates a defensive Shot Chart for the desired team on a given season, that
+#' is a shot chart of the shots the team recieves during the year
+#' @param Seasondata a data frame with the details of the season
+#' @param team the name of the team that you want to make a graph of
+#' @param quant the quantile of shots to be graphed, defaults to 0.4
+#' @param type either "PPS" for points per shot or "PCT" for percentage
+#' @return a shot chart graph
 #' @examples
 #' data("season2017")
 #' #Examples with several teams
-#' DefShotSeasonGraphTeam(season2017, team = "GSW")
-#' DefShotSeasonGraphTeam(season2017, team = "Hou")
-#' DefShotSeasonGraphTeam(season2017, team = "ORL")
+#' DefShotSeasonGraphTeam(season2017, team = "Sas")
+#' DefShotSeasonGraphTeam(season2017, team = "Cle")
 #' #Examples with shooting percentage instead of Points per Shot
-#' DefShotSeasonGraphTeam(season2017, team = "ORL", type = "PCT")
-#' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}
+#' DefShotSeasonGraphTeam(season2017, team = "Cle", type = "PCT")
 #' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
+#' @importFrom hexbin hcell2xy
+#' @importFrom hexbin hexbin
+#' @importFrom ggplot2 aes_string
 #' @importFrom ggplot2 annotation_custom
 #' @importFrom ggplot2 coord_fixed
 #' @importFrom ggplot2 element_blank
@@ -302,16 +482,15 @@ OffShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
 #' @importFrom ggplot2 theme
 #' @importFrom ggplot2 xlim
 #' @importFrom ggplot2 ylim
-#' @importFrom hexbin hcell2xy
-#' @importFrom hexbin hexbin
 #' @importFrom stats quantile
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
+#'
 
-DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
-  Seasondata <- dplyr::filter(Seasondata, HTM == team | VTM == team & TEAM_NAME != team)
+DefShotSeasonGraphTeam<- function(Seasondata, team, quant = 0.4, type = "PPS") {
+  LOC_Y <- TEAM_NAME <- ST <- HTM <- VTM <- NULL
+  Seasondata <- filter(Seasondata, LOC_Y < 280)
+  Seasondata <- filter(Seasondata, HTM == team | VTM == team & TEAM_NAME != team)
   #Get the maximum and minumum values for x and y
   xbnds <- range(Seasondata$LOC_X)
   ybnds <- range(Seasondata$LOC_Y)
@@ -319,7 +498,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
 
   if (type == "PPS"){
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -329,7 +508,7 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
 
   if (type == "PCT"){
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, 25, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG)), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -367,397 +546,29 @@ DefShotSeasonGraphTeam <- function(Seasondata, team, nbins = 25, quant = 0.4, ty
   Total$PPS <- rep(Totalhex$PPS, each = 6)
 
   #Make Graph
+
+  #data("court")
+
   if(type == "PPS"){
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(name = "PPS", midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(name = "PPS", midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
       coord_fixed()  +theme(line = element_blank(),
                             axis.title.x = element_blank(),
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")
+
   }else{
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(name = "Pct", midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
+    GRAPH <- ggplot(Total, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(name ="PCT", midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1), breaks =c(0,0.5,1), labels =c("0%","50%","100%")) +
       coord_fixed()  +theme(line = element_blank(),
                             axis.title.x = element_blank(),
                             axis.title.y = element_blank(),
                             axis.text.x = element_blank(),
                             axis.text.y = element_blank(),
                             plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280)) + xlim(c(-250, 250))+ theme(legend.position="bottom")}
-    GRAPH <- GRAPH +  ggtitle(paste("Defensive shot chart of", team, sep =" "))
-
-
-  return(GRAPH)
-}
-
-#' plot the shot chart of a player for an NBA Season
-#'
-#' This function takes an NBA season object and makes a shot chart of all the
-#' shots takes through that regular season.
-#' You can choose to either plot the results based on Points per Shot or on
-#' Shooting Percentage
-#' @param Seasondata The information of shots, it can be downloaded with function
-#' read_season
-#' @param player the player you which to plot the shot charts of
-#' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 25)
-#' @param quant A number between 0 and 1, it determines quantile of shots used
-#' to plot the shot chart, (default is 0.4)
-#' @param type A character to specify if the shot chart is based on Points per
-#' Shot ("PPS") or percentage ("PCT")
-#' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 280
-#' @return a ggplot object plotting the defensive shot chart of a given team on
-#' an NBA season
-#' @examples
-#' data("season2017")
-#' #Examples with several players
-#' OffShotSeasonGraphPlayer(season2017, player = "Stephen Curry")
-#' OffShotSeasonGraphPlayer(season2017, player = "DeAndre Jordan")
-#' OffShotSeasonGraphPlayer(season2017, player = "DeMar DeRozan")
-#' OffShotSeasonGraphPlayer(season2017, player = "Isaiah Thomas")
-#'
-#'  #Examples with percentage instead of points per shot
-#' OffShotSeasonGraphPlayer(season2017, player = "Stephen Curry", type = "PCT")
-#' OffShotSeasonGraphPlayer(season2017, player = "DeAndre Jordan", type = "PCT")
-
-#' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}
-#' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 annotation_custom
-#' @importFrom ggplot2 coord_fixed
-#' @importFrom ggplot2 element_blank
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 geom_polygon
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 ggtitle
-#' @importFrom ggplot2 scale_fill_gradient2
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 xlim
-#' @importFrom ggplot2 ylim
-#' @importFrom hexbin hcell2xy
-#' @importFrom hexbin hexbin
-#' @importFrom stats quantile
-#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
-#' @export
-#'
-OffShotSeasonGraphPlayer <- function(Seasondata, player, nbins = 25, quant = 0.4, type = "PPS", MAX_Y = 280) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
-Seasondata <- dplyr::filter(Seasondata, PLAYER_NAME == player)
-#Get the maximum and minumum values for x and y
-xbnds <- range(Seasondata$LOC_X)
-ybnds <- range(Seasondata$LOC_Y)
-#Make hexbin dataframes out of the players
-
-if (type == "PPS"){
-  makeHexData <- function(df) {
-    h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
-    data.frame(hcell2xy(h),
-               PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
-               ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
-               cid = h@cell)
-  }
-}
-
-if (type == "PCT"){
-  makeHexData <- function(df) {
-    h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
-    data.frame(hcell2xy(h),
-               PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG)), h@cID, FUN = function(z) sum(z)/length(z)),
-               ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
-               cid = h@cell)
-  }
-}
-
-
-##Total NBA data
-Totalhex <- makeHexData(Seasondata)
-Totalhex <- filter(Totalhex, ST > quantile(Totalhex$ST, probs = quant))
-Totalhex$ST <- ifelse(Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                      ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                             ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                    ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
-                                           1))))
-
-
-#Function to transform hexbins into polygons
-hex_coord_df <- function(x, y, width, height, size = 1) {
-  # like hex_coord but returns a dataframe of vertices grouped by an id variable
-  dx <- size * width / 6
-  dy <- size * height / 2 / sqrt(3)
-
-  hex_y <- rbind(y - 2 * dy, y - dy, y + dy, y + 2 * dy, y + dy, y - dy)
-  hex_x <- rbind(x, x + dx, x + dx, x, x - dx, x - dx)
-  id    <- rep(1:length(x), each=6)
-
-  data.frame(cbind(x=as.vector(hex_x), y=as.vector(hex_y), id))
-}
-
-#Transform Hexbins into polygons
-
-Total <- hex_coord_df(Totalhex$x, Totalhex$y, 35*Totalhex$ST, 12*Totalhex$ST, size =1)
-Total$PPS <- rep(Totalhex$PPS, each = 6)
-
-#Make Graph
-if(type == "PPS"){
-  GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
-    coord_fixed()  +theme(line = element_blank(),
-                          axis.title.x = element_blank(),
-                          axis.title.y = element_blank(),
-                          axis.text.x = element_blank(),
-                          axis.text.y = element_blank(),
-                          legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 280))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
-}else{
-  GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
-    coord_fixed()  +theme(line = element_blank(),
-                          axis.title.x = element_blank(),
-                          axis.title.y = element_blank(),
-                          axis.text.x = element_blank(),
-                          axis.text.y = element_blank(),
-                          legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
-}
-if(type == "PPS"){
-  GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", player, sep =" "))
-}  else {GRAPH <- GRAPH +  ggtitle(paste("Shooting percentage", player, sep =" ")
-)}
-
-
-return(GRAPH)
-}
-
-
-#' plot all the shots taken on an NBA Season separating makes and misses
-#'
-#' This function takes an NBA season object and plots as circles all the shots
-#' taken on an nba season, ploting makes and misses as different colors
-#' @param Seasondata The information of shots, it can be downloaded with function
-#' read_season
-#' @return a ggplot object plotting all the shots taken on an NBA season
-#' @examples
-#' data("season2017")
-#' PointShotSeasonGraph(season2017)
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}
-#' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 annotation_custom
-#' @importFrom ggplot2 coord_fixed
-#' @importFrom ggplot2 element_blank
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 geom_point
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 ggtitle
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 xlim
-#' @importFrom ggplot2 ylim
-#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
-#' @export
-#'
-
-
-PointShotSeasonGraph <- function(Seasondata) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
-  Seasondata$SHOT_MADE_FLAG <- ifelse(Seasondata$SHOT_MADE_FLAG == "1", "Made", "Missed")
-  Seasondata$SHOT_MADE_FLAG <- as.factor(Seasondata$SHOT_MADE_FLAG)
-  #Make Graph
-  GRAPH <- ggplot(Seasondata, aes(x=LOC_X, y = LOC_Y))+ annotation_custom(court, -250, 250, -52, 418) + geom_point(aes(color = SHOT_MADE_FLAG), alpha = 0.2) +
-    coord_fixed()  +theme(line = element_blank(),
-                          axis.title.x = element_blank(),
-                          axis.title.y = element_blank(),
-                          axis.text.x = element_blank(),
-                          axis.text.y = element_blank(),
-                          legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")
-  return(GRAPH)
-}
-
-
-#' plot all the shots taken on an NBA Season separating makes and misses
-#'
-#' This function takes an NBA season object and plots as circles all the shots
-#' taken on an nba season, ploting makes and misses as different colors
-#' @param Seasondata The information of shots, it can be downloaded with function
-#' read_season
-#' @param team The team the shots should be graphed
-#' @return a ggplot object plotting all the shots taken by a team on an NBA
-#' season
-#' @examples
-#' data("season2017")
-#' PointShotSeasonGraphTeam(season2017, "Hou")
-#' PointShotSeasonGraphTeam(season2017, "Orl")
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}
-#' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 annotation_custom
-#' @importFrom ggplot2 coord_fixed
-#' @importFrom ggplot2 element_blank
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 geom_point
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 ggtitle
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 xlim
-#' @importFrom ggplot2 ylim
-#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
-#' @export
-#'
-
-
-PointShotSeasonGraphTeam <- function(Seasondata, team) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
-  Seasondata <- dplyr::filter(Seasondata, TEAM_NAME == team)
-  Seasondata$SHOT_MADE_FLAG <- ifelse(Seasondata$SHOT_MADE_FLAG == "1", "Made", "Missed")
-  Seasondata$SHOT_MADE_FLAG <- as.factor(Seasondata$SHOT_MADE_FLAG)
-  #Make Graph
-  GRAPH <- ggplot(Seasondata, aes(x=LOC_X, y = LOC_Y))+ annotation_custom(court, -250, 250, -52, 418) + geom_point(aes(color = SHOT_MADE_FLAG), alpha = 0.2) +
-    coord_fixed()  +theme(line = element_blank(),
-                          axis.title.x = element_blank(),
-                          axis.title.y = element_blank(),
-                          axis.text.x = element_blank(),
-                          axis.text.y = element_blank(),
-                          legend.title = element_blank(),
-                          plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 280))+ theme(legend.position="bottom")
-  return(GRAPH)
-}
-
-
-#' plot the shot chart of a player for an NBA Season with eight bins
-#'
-#' This function takes an NBA season object and makes a shot chart of all the
-#' shots takes through that regular season.
-#' You can choose to either plot the results based on Points per Shot or on
-#' Shooting Percentage
-#' @param Seasondata The information of shots, it can be downloaded with function
-#' read_season
-#' @param player the player you which to plot the shot charts of
-#' @param nbins The number of bins the hexplot for the shot charts are made
-#' (default is 8)
-#' @param quant A number between 0 and 1, it determines quantile of shots used
-#' to plot the shot chart, (default is 0.4)
-#' @param type A character to specify if the shot chart is based on Points per
-#' Shot ("PPS") or percentage ("PCT")
-#' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 280
-#' @return a ggplot object plotting the defensive shot chart of a given team on
-#' an NBA season
-#' @examples
-#' data("season2017")
-#' #Examples with several players
-#' OffShotSeasonGraphPlayer(season2017, player = "Stephen Curry")
-#' OffShotSeasonGraphPlayer(season2017, player = "DeAndre Jordan")
-#' OffShotSeasonGraphPlayer(season2017, player = "DeMar DeRozan")
-#' OffShotSeasonGraphPlayer(season2017, player = "Isaiah Thomas")
-#'
-#'  #Examples with percentage instead of points per shot
-#' OffShotSeasonGraphPlayerEight(season2017, player = "Stephen Curry", type = "PCT")
-#' OffShotSeasonGraphPlayerEight(season2017, player = "DeAndre Jordan", type = "PCT")
-
-#' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}
-#' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 annotation_custom
-#' @importFrom ggplot2 coord_fixed
-#' @importFrom ggplot2 element_blank
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 geom_polygon
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 ggtitle
-#' @importFrom ggplot2 scale_fill_gradient2
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 xlim
-#' @importFrom ggplot2 ylim
-#' @importFrom hexbin hcell2xy
-#' @importFrom hexbin hexbin
-#' @importFrom stats quantile
-#' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
-#' @export
-#'
-OffShotSeasonGraphPlayerEight <- function(Seasondata, player, nbins = 8, quant = 0.4, type = "PPS", MAX_Y = 418) {
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
-  Seasondata <- dplyr::filter(Seasondata, PLAYER_NAME == player)
-  #Get the maximum and minumum values for x and y
-  xbnds <- range(Seasondata$LOC_X)
-  ybnds <- range(Seasondata$LOC_Y)
-  #Make hexbin dataframes out of the players
-
-  if (type == "PPS"){
-    makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
-      data.frame(hcell2xy(h),
-                 PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
-                 ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
-                 cid = h@cell)
-    }
-  }
-
-  if (type == "PCT"){
-    makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = xbnds, ybnds = ybnds, IDs = TRUE)
-      data.frame(hcell2xy(h),
-                 PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG)), h@cID, FUN = function(z) sum(z)/length(z)),
-                 ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
-                 cid = h@cell)
-    }
-  }
-
-
-  ##Total NBA data
-  Totalhex <- makeHexData(Seasondata)
-  Totalhex <- filter(Totalhex, ST > quantile(Totalhex$ST, probs = quant))
-  Totalhex$ST <- ifelse(Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                        ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                               ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                      ifelse(Totalhex$ST > quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Totalhex$ST <= quantile(Totalhex$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
-                                             1))))
-
-
-  #Function to transform hexbins into polygons
-  hex_coord_df <- function(x, y, width, height, size = 1) {
-    # like hex_coord but returns a dataframe of vertices grouped by an id variable
-    dx <- size * width / 6
-    dy <- size * height / 2 / sqrt(3)
-
-    hex_y <- rbind(y - 2 * dy, y - dy, y + dy, y + 2 * dy, y + dy, y - dy)
-    hex_x <- rbind(x, x + dx, x + dx, x, x - dx, x - dx)
-    id    <- rep(1:length(x), each=6)
-
-    data.frame(cbind(x=as.vector(hex_x), y=as.vector(hex_y), id))
-  }
-
-  #Transform Hexbins into polygons
-
-  Total <- hex_coord_df(Totalhex$x, Totalhex$y, 170*Totalhex$ST, 50*Totalhex$ST, size =1)
-  Total$PPS <- rep(Totalhex$PPS, each = 6)
-
-  #Make Graph
   if(type == "PPS"){
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 1, low = "blue", high = "red", limits=c(0, 3)) +
-      coord_fixed()  +theme(line = element_blank(),
-                            axis.title.x = element_blank(),
-                            axis.title.y = element_blank(),
-                            axis.text.x = element_blank(),
-                            axis.text.y = element_blank(),
-                            legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 320))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
-  }else{
-    GRAPH <- ggplot(Total, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(midpoint = 0.5, low = "blue", high = "red", limits=c(0, 1)) +
-      coord_fixed()  +theme(line = element_blank(),
-                            axis.title.x = element_blank(),
-                            axis.title.y = element_blank(),
-                            axis.text.x = element_blank(),
-                            axis.text.y = element_blank(),
-                            legend.title = element_blank(),
-                            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 320))+ xlim(c(-250, 250)) + theme(legend.position="bottom")
-  }
-  if(type == "PPS"){
-    GRAPH <- GRAPH +  ggtitle(paste("Points per Shot of", player, sep =" "))
-  }  else {GRAPH <- GRAPH +  ggtitle(paste("Shooting percentage", player, sep =" ")
+    GRAPH <- GRAPH +  ggtitle(paste("Defensive shot chart", team, sep =" "))
+  }  else {GRAPH <- GRAPH +  ggtitle(paste("Defensive shot chart", team, sep =" ")
   )}
 
 

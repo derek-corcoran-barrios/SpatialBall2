@@ -6,7 +6,7 @@
 Season}
 \usage{
 ShotComparisonGraph(HomeTeam, VisitorTeam, Seasondata, nbins = 25,
-  quant = 0.4, focus = "all", MAX_Y = 280)
+  quant = 0.4, focus = "all")
 }
 \arguments{
 \item{HomeTeam}{The home team in the match up}
@@ -26,9 +26,6 @@ to plot the shot chart, (default is 0.4)}
 the character "all" (default) is specified, all shots will be ploted, if
 "plus" the shots where the offense has the advantage, if minus, where the
 defense has the advantage}
-
-\item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-280}
 }
 \value{
 a ggplot object plotting the offensive shot chart of a given team on
@@ -47,8 +44,6 @@ focus = "plus")
 }
 \seealso{
 \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-
-\code{\link[SpatialBall]{ShotSeasonGraph}}#' @importFrom dplyr filter
 }
 \author{
 Derek Corcoran <derek.corcoran.barrios@gmail.com>

@@ -5,7 +5,7 @@
 \title{Calculate the Offensive, Defensive, and Experimental Net Spatial Rating for a particular
 NBA Season}
 \usage{
-ExpSpatialRating(Seasondata, nbins = 25, MAX_Y = 280)
+ExpSpatialRating(Seasondata, nbins = 25)
 }
 \arguments{
 \item{Seasondata}{The information of shots, it can be downloaded with function
@@ -13,8 +13,6 @@ read_season}
 
 \item{nbins}{The number of bins the hexplot for the shot charts are made
 (default is 25)}
-
-\item{MAX_Y}{a numeric that limits the y axis of the shot chart}
 }
 \value{
 a dataframe with the Offensive, Defensive, and Net Spatial Rating for
@@ -25,8 +23,10 @@ This function takes an NBA season object and calculates the Offensive,
 Defensive, and Net Spatial Rating
 }
 \examples{
+\dontrun{
 data("season2017")
 SpatialRating(Seasondata = season2017)
+}
 }
 \seealso{
 \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}

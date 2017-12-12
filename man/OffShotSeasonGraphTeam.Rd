@@ -2,52 +2,32 @@
 % Please edit documentation in R/plots.R
 \name{OffShotSeasonGraphTeam}
 \alias{OffShotSeasonGraphTeam}
-\title{plot the offensive shot chart of a team for an NBA Season}
+\title{Generates an offensive shot chart for a given team}
 \usage{
-OffShotSeasonGraphTeam(Seasondata, team, nbins = 25, quant = 0.4,
-  type = "PPS", MAX_Y = 280)
+OffShotSeasonGraphTeam(Seasondata, team, quant = 0.4, type = "PPS")
 }
 \arguments{
-\item{Seasondata}{The information of shots, it can be downloaded with function
-read_season}
+\item{Seasondata}{a data frame with the details of the season}
 
-\item{team}{the team you which to plot the shot charts of}
+\item{team}{the name of the team that you want to make a graph of}
 
-\item{nbins}{The number of bins the hexplot for the shot charts are made
-(default is 30)}
+\item{quant}{the quantile of shots to be graphed, defaults to 0.4}
 
-\item{quant}{A number between 0 and 1, it determines quantile of shots used
-to plot the shot chart, (default is 0.4)}
-
-\item{type}{A character to specify if the shot chart is based on Points per
-Shot ("PPS") or percentage ("PCT")}
-
-\item{MAX_Y}{a numeric that limits the y axis of the shot chart, defaults at
-270}
+\item{type}{either "PPS" for points per shot or "PCT" for percentage}
 }
 \value{
-a ggplot object plotting the offensive shot chart of a given team on
-an NBA season
+a shot chart graph
 }
 \description{
-This function takes an NBA season object and makes a shot chart of all the
-shots takes through that regular season.
-You can choose to either plot the results based on Points per Shot or on
-Shooting Percentage
+creates an offensive Shot Chart for the desired team on a given season
 }
 \examples{
 data("season2017")
 #Examples with several teams
-OffShotSeasonGraphTeam(season2017, team = "GSW",quant = 0.4)
-OffShotSeasonGraphTeam(season2017, team = "Hou",quant = 0.4)
-OffShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4)
+OffShotSeasonGraphTeam(season2017, team = "GSW")
+OffShotSeasonGraphTeam(season2017, team = "Hou")
 #Examples with shooting percentage instead of Points per Shot
-OffShotSeasonGraphTeam(season2017, team = "ORL",quant = 0.4, type = "PCT")
-}
-\seealso{
-\code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-
-\code{\link[SpatialBall]{ShotSeasonGraph}}#' @importFrom dplyr filter
+OffShotSeasonGraphTeam(season2017, team = "ORL", type = "PCT")
 }
 \author{
 Derek Corcoran <derek.corcoran.barrios@gmail.com>

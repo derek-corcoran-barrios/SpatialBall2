@@ -8,7 +8,6 @@
 #' (default is 25)
 #' @param HomeTeam Home Team
 #' @param VisitorTeam Visitor Team
-#' @param MAX_Y a numeric that limits the y axis of the shot chart
 #' @return a dataframe with the offensive apps, defensive apps and home spread
 #' @examples
 #' data("season2017")
@@ -19,14 +18,18 @@
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom caret predict.train
 #' @importFrom dplyr filter
+#' @importFrom dplyr group_by
+#' @importFrom dplyr rename
+#' @importFrom dplyr summarize
 #' @importFrom hexbin hcell2xy
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
-Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280){
-  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25, MAX_Y = 280) {
+Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25){
+  LOC_Y <- TEAM_NAME <- HTM <- VTM <- PPS <- ST <- NULL
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25) {
   #Filter the offensive data of the Offensive Team
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+  Seasondata <- filter(Seasondata, LOC_Y < 280)
   Off <- filter(Seasondata, TEAM_NAME == OffTeam)
   #Filter the Deffensive data of the Defensive team
   deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
@@ -35,7 +38,7 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
   #ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y), na.rm = TRUE)
   #Make hexbin dataframes out of the teams
   makeHexData <- function(df) {
-    h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
+    h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, 280), IDs = TRUE)
     data.frame(hcell2xy(h),
                PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -79,10 +82,9 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
 
   return(PPSAAc)
   }
-  data("BRT")
   defAPPS <- ComparisonPPS(OffTeam = HomeTeam, DefTeam = VisitorTeam, Seasondata = Seasondata, nbins = nbins)
   offAPPS <- ComparisonPPS(OffTeam = VisitorTeam, DefTeam = HomeTeam, Seasondata = Seasondata, nbins = nbins)
-  spread <- predict(BRT, data.frame(defAPPS = defAPPS, offAPPS = offAPPS))
+  spread <- predict.train(BRT, data.frame(defAPPS = defAPPS, offAPPS = offAPPS))
   return(data.frame(defAPPS = defAPPS, offAPPS= offAPPS, spread = spread))
 }
 
@@ -96,7 +98,6 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
 #' (default is 25)
 #' @param HomeTeam Home Team
 #' @param VisitorTeam Visitor Team
-#' @param MAX_Y a numeric that limits the y axis of the shot chart
 #' @return a dataframe with the offensive apps, defensive apps and home spread
 #' @examples
 #' data("season2017")
@@ -107,16 +108,21 @@ Get_Apps <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280)
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom caret predict.train
 #' @importFrom dplyr filter
+#' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
 #' @importFrom dplyr rename
+#' @importFrom dplyr summarize
 #' @importFrom hexbin hcell2xy
 #' @importFrom hexbin hexbin
+#' @importFrom magrittr "%>%"
+#' @importFrom stats weighted.mean
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
-Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 280){
-  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25, MAX_Y = 280) {
+Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25){
+  LOC_Y <- TEAM_NAME <- HTM <- VTM <- GAME_ID <- PPS <- n <- ST <- DefPPS <- TotalPPS <- OffPPS <- NULL
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25) {
     #Filter the offensive data of the Offensive Team
-    Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+    Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
     Off <- filter(Seasondata, TEAM_NAME == OffTeam)
     N <- filter(Seasondata, HTM == OffTeam | VTM == OffTeam) %>% group_by(GAME_ID) %>% summarize(N = n()) %>% summarize(N = mean(N))
     N <- N$N
@@ -125,7 +131,7 @@ Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 
     #Get the maximum and minumum values for x and y
     #Make hexbin dataframes out of the teams
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, 280), IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -151,7 +157,7 @@ Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 
 
     #make team comparisons
     Comparison <- merge(DiffOff, DiffDeff, all = T)
-    Comparison <- mutate(Comparison, Diff = OffPPS + DefPPS + TotalPPS)
+    Comparison <- mutate(Comparison, Diff = OffPPS + DefPPS)
 
 
     PPSAA <- weighted.mean(x = Comparison$Diff, w = (Comparison$OffST + Comparison$DefST), na.rm = TRUE)
@@ -181,26 +187,30 @@ Get_Apps_Exp <- function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, MAX_Y = 
 #' read_season
 #' @param nbins The number of bins the hexplot for the shot charts are made
 #' (default is 25)
-#' @param MAX_Y a numeric that limits the y axis of the shot chart
 #' @return a dataframe with the Offensive, Defensive, and Net Spatial Rating for
 #' an NBA Season
 #' @examples
+#' \dontrun{
 #' data("season2017")
 #' SpatialRating(Seasondata = season2017)
+#' }
 #' @seealso \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom dplyr arrange
 #' @importFrom dplyr desc
 #' @importFrom dplyr filter
+#' @importFrom dplyr mutate
+#' @importFrom dplyr rename
 #' @importFrom hexbin hcell2xy
 #' @importFrom hexbin hexbin
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 
-SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
-  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = nbins, MAX_Y = MAX_Y) {
+SpatialRating <- function(Seasondata, nbins = 25){
+  LOC_Y <- TEAM_NAME <- HTM <- VTM <- netrating <- PPS <- ST <- DefPPS <- TotalPPS <- OffPPS <- NULL
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = nbins) {
     #Filter the offensive data of the Offensive Team
-    Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+    Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
     Off <- filter(Seasondata, TEAM_NAME == OffTeam)
     #Filter the Deffensive data of the Defensive team
     deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
@@ -209,7 +219,7 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
     #ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y), na.rm = TRUE)
     #Make hexbin dataframes out of the teams
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, 280), IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -217,37 +227,33 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
     }
     ##Total NBA data
     Totalhex <- makeHexData(Seasondata)
+    Totalhex <- rename(Totalhex, TotalPPS = PPS, TotalST = ST)
     ##Defensive team data
     Defhex <- makeHexData(deff)
+    Defhex <- rename(Defhex, DefPPS = PPS, DefST = ST)
     ##Offensive team data
     Offhex <- makeHexData(Off)
+    Offhex <- rename(Offhex, OffPPS = PPS, OffST = ST)
     #Merge offensive and deffensive data with total data by Cell id
-    DeffbyCell <- merge(Totalhex, Defhex, by = "cid", all = T)
-    OffByCell <- merge(Totalhex, Offhex, by = "cid", all = T)
+    DeffbyCell <- merge(Totalhex, Defhex, all = T)
+    OffbyCell <- merge(Totalhex, Offhex, all = T)
     #  make a "difference" data.frame
-    DiffDeff <- data.frame(x = ifelse(is.na(DeffbyCell$x.x), DeffbyCell$x.y, DeffbyCell$x.x),
-                           y = ifelse(is.na(DeffbyCell$y.x), DeffbyCell$y.y, DeffbyCell$y.x),
-                           PPS= DeffbyCell$PPS.y - DeffbyCell$PPS.x,
-                           cid= DeffbyCell$cid,
-                           ST = DeffbyCell$ST.y)
+    DiffDeff <- mutate(DeffbyCell, DefPPS = DefPPS - TotalPPS)
 
-    DiffOff <- data.frame(x = ifelse(is.na(OffByCell$x.x), OffByCell$x.y, OffByCell$x.x),
-                          y = ifelse(is.na(OffByCell$y.x), OffByCell$y.y, OffByCell$y.x),
-                          PPS= OffByCell$PPS.y - OffByCell$PPS.x,
-                          ST = OffByCell$ST.x,
-                          cid = OffByCell$cid,
-                          ST = OffByCell$ST.y)
+
+    DiffOff <-  mutate(OffbyCell, OffPPS = OffPPS - TotalPPS)
+
     #make team comparisons
-    Comparison <- merge(DiffOff, DiffDeff, by = "cid", all = T)
-    Comparison <- Comparison[,-c(6:7)]
-    Comparison$Diff <- c(Comparison$PPS.x + Comparison$PPS.y)
+    Comparison <- merge(DiffOff, DiffDeff, all = T)
+    Comparison <- mutate(Comparison, Diff = OffPPS + DefPPS )
+    #make team comparisons
 
 
-    PPSAA <- weighted.mean((Comparison$PPS.x + Comparison$PPS.y), Comparison$ST.x, na.rm = TRUE)
+    PPSAA <- weighted.mean(Comparison$Diff, Comparison$OffST, na.rm = TRUE)
     Offa <- dplyr::filter(Seasondata, HTM == OffTeam | VTM == OffTeam)
-    OffCorrection <- nrow(dplyr::filter(Offa, TEAM_NAME == OffTeam))/nrow(dplyr::filter(Offa, TEAM_NAME != OffTeam))
+    OffCorrection <- nrow(filter(Offa, TEAM_NAME == OffTeam))/nrow(filter(Offa, TEAM_NAME != OffTeam))
     Defa <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam)
-    DefCorrection <- nrow(dplyr::filter(Defa, TEAM_NAME != DefTeam))/nrow(dplyr::filter(Defa, TEAM_NAME == DefTeam))
+    DefCorrection <- nrow(filter(Defa, TEAM_NAME != DefTeam))/nrow(filter(Defa, TEAM_NAME == DefTeam))
     PPSAAc = PPSAA*((OffCorrection*DefCorrection)/2)
 
 
@@ -262,7 +268,7 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 
   for (i in 1:length(Offensive_teams)) {
     for (j in 1:length(defenseve_names)){
-      df[rownames(df) == defenseve_names[j],colnames(df) == Offensive_teams[i]] <- ComparisonPPS(OffTeam = Offensive_teams[i], DefTeam = defenseve_names[j], Seasondata = Seasondata, nbins = nbins, MAX_Y = MAX_Y)
+      df[rownames(df) == defenseve_names[j],colnames(df) == Offensive_teams[i]] <- ComparisonPPS(OffTeam = Offensive_teams[i], DefTeam = defenseve_names[j], Seasondata = Seasondata, nbins = nbins)
     }
     print(paste(i, "of", length(Offensive_teams)))
   }
@@ -295,12 +301,13 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 #' read_season
 #' @param nbins The number of bins the hexplot for the shot charts are made
 #' (default is 25)
-#' @param MAX_Y a numeric that limits the y axis of the shot chart
 #' @return a dataframe with the Offensive, Defensive, and Net Spatial Rating for
 #' an NBA Season
 #' @examples
+#' \dontrun{
 #' data("season2017")
 #' SpatialRating(Seasondata = season2017)
+#' }
 #' @seealso \code{\link[SpatialBall]{DefShotSeasonGraphTeam}}
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
 #' @importFrom dplyr arrange
@@ -311,17 +318,18 @@ SpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 
-ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
-  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25, MAX_Y = 280) {
+ExpSpatialRating <- function(Seasondata, nbins = 25){
+  LOC_Y <- TEAM_NAME <- HTM <- VTM <- netrating <- PPS <- ST  <- DefPPS <-  OffPPS <- TotalPPS<-  NULL
+  ComparisonPPS <- function(OffTeam, DefTeam, Seasondata, nbins = 25) {
     #Filter the offensive data of the Offensive Team
-    Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+    Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
     Off <- filter(Seasondata, TEAM_NAME == OffTeam)
     #Filter the Deffensive data of the Defensive team
     deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
     #Get the maximum and minumum values for x and y
     #Make hexbin dataframes out of the teams
     makeHexData <- function(df) {
-      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, MAX_Y), IDs = TRUE)
+      h <- hexbin(df$LOC_X, df$LOC_Y, nbins, xbnds = c(-250, 250), ybnds = c(-51, 280), IDs = TRUE)
       data.frame(hcell2xy(h),
                  PPS = tapply(as.numeric(as.character(df$SHOT_MADE_FLAG))*ifelse(tolower(df$SHOT_TYPE) == "3pt field goal", 3, 2), h@cID, FUN = function(z) sum(z)/length(z)),
                  ST = tapply(df$SHOT_MADE_FLAG, h@cID, FUN = function(z) length(z)),
@@ -369,7 +377,7 @@ ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 
   for (i in 1:length(Offensive_teams)) {
     for (j in 1:length(defenseve_names)){
-      df[rownames(df) == defenseve_names[j],colnames(df) == Offensive_teams[i]] <- ComparisonPPS(OffTeam = Offensive_teams[i], DefTeam = defenseve_names[j], Seasondata = Seasondata, nbins = nbins, MAX_Y = MAX_Y)
+      df[rownames(df) == defenseve_names[j],colnames(df) == Offensive_teams[i]] <- ComparisonPPS(OffTeam = Offensive_teams[i], DefTeam = defenseve_names[j], Seasondata = Seasondata, nbins = nbins)
     }
     print(paste(i, "of", length(Offensive_teams)))
   }
@@ -410,8 +418,6 @@ ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 #' the character "all" (default) is specified, all shots will be ploted, if
 #' "plus" the shots where the offense has the advantage, if minus, where the
 #' defense has the advantage
-#' @param MAX_Y a numeric that limits the y axis of the shot chart, defaults at
-#' 280
 #' @return a ggplot object plotting the offensive shot chart of a given team on
 #' an NBA season
 #' @examples
@@ -421,9 +427,9 @@ ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 #' ShotComparisonGraph(HomeTeam = "GSW", VisitorTeam = "Sas", Seasondata = season2017,
 #' focus = "plus")
 #' @seealso \code{\link[SpatialBall]{OffShotSeasonGraphTeam}}
-#' @seealso \code{\link[SpatialBall]{ShotSeasonGraph}}#' @importFrom dplyr filter
 #' @importFrom dplyr filter
-#' @importFrom ggplot2 aes
+#' @importFrom dplyr rename
+#' @importFrom ggplot2 aes_string
 #' @importFrom ggplot2 annotation_custom
 #' @importFrom ggplot2 coord_fixed
 #' @importFrom ggplot2 element_blank
@@ -445,14 +451,14 @@ ExpSpatialRating <- function(Seasondata, nbins = 25, MAX_Y = 280){
 #' @author Derek Corcoran <derek.corcoran.barrios@gmail.com>
 #' @export
 
-ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all", MAX_Y = 280){
-  ShotComparisonGraph2 <- function(OffTeam, DefTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all", MAX_Y = 280) {
+ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all"){
+  LOC_Y <- TEAM_NAME <- HTM <- VTM <- PPS <- ST <- OffST <- DefST <- Diff <- NULL
+  ShotComparisonGraph2 <- function(OffTeam, DefTeam, Seasondata, nbins = 25, quant = 0.4, focus = "all") {
   #Filter the offensive data of the Offensive Team
-  data("court")
-  Seasondata <- dplyr::filter(Seasondata, LOC_Y < MAX_Y)
+  Seasondata <- dplyr::filter(Seasondata, LOC_Y < 280)
   Off <- filter(Seasondata, TEAM_NAME == OffTeam)
   #Filter the Deffensive data of the Defensive team
-  deff <- dplyr::filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
+  deff <- filter(Seasondata, HTM == DefTeam | VTM == DefTeam & TEAM_NAME != DefTeam)
   #Get the maximum and minumum values for x and y
   xbnds <- range(c(Seasondata$LOC_X, deff$LOC_X))
   ybnds <- range(c(Seasondata$LOC_Y, deff$LOC_Y))
@@ -466,42 +472,41 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
   }
   ##Total NBA data
   Totalhex <- makeHexData(Seasondata)
+  Totalhex <- rename(Totalhex, TotalPPS = PPS, TotalST = ST)
   ##Defensive team data
   Defhex <- makeHexData(deff)
+  Defhex <- rename(Defhex, DefPPS = PPS, DefST = ST)
+
   ##Offensive team data
   Offhex <- makeHexData(Off)
+  Offhex <- rename(Offhex, OffPPS = PPS, OffST = ST)
   #Merge offensive and deffensive data with total data by Cell id
-  DeffbyCell <- merge(Totalhex, Defhex, by = "cid", all = T)
-  OffByCell <- merge(Totalhex, Offhex, by = "cid", all = T)
+  DeffbyCell <- merge(Totalhex, Defhex, all = T)
+  OffByCell <- merge(Totalhex, Offhex, all = T)
   ##  when calculating the difference empty cells should count as 0
-  DeffbyCell$PPS.x[is.na(DeffbyCell$PPS.x)] <- 0
-  DeffbyCell$PPS.y[is.na(DeffbyCell$PPS.y)] <- 0
-  DeffbyCell$ST.y[is.na(DeffbyCell$ST.y)] <- 0
+  DeffbyCell$TotalPPS[is.na(DeffbyCell$TotalPPS)] <- 0
+  DeffbyCell$DefPPS[is.na(DeffbyCell$DefPPS)] <- 0
+  DeffbyCell$DefST[is.na(DeffbyCell$DefST)] <- 0
 
-  OffByCell$PPS.x[is.na(OffByCell$PPS.x)] <- 0
-  OffByCell$PPS.y[is.na(OffByCell$PPS.y)] <- 0
-  OffByCell$ST.y[is.na(OffByCell$ST.y)] <- 0
+  OffByCell$TotalPPS[is.na(OffByCell$TotalPPS)] <- 0
+  OffByCell$OffPPS[is.na(OffByCell$OffPPS)] <- 0
+  OffByCell$OffST[is.na(OffByCell$OffST)] <- 0
   #  make a "difference" data.frame
-  DiffDeff <- data.frame(x = ifelse(is.na(DeffbyCell$x.x), DeffbyCell$x.y, DeffbyCell$x.x),
-                         y = ifelse(is.na(DeffbyCell$y.x), DeffbyCell$y.y, DeffbyCell$y.x),
-                         PPS= DeffbyCell$PPS.y - DeffbyCell$PPS.x,
+  DiffDeff <- data.frame(x = DeffbyCell$x,
+                         y = DeffbyCell$y,
+                         DefPPS= DeffbyCell$DefPPS - DeffbyCell$TotalPPS,
                          cid= DeffbyCell$cid,
-                         ST = DeffbyCell$ST.y)
+                         DefST = DeffbyCell$DefST)
 
-  DiffOff <- data.frame(x = ifelse(is.na(OffByCell$x.x), OffByCell$x.y, OffByCell$x.x),
-                        y = ifelse(is.na(OffByCell$y.x), OffByCell$y.y, OffByCell$y.x),
-                        PPS= OffByCell$PPS.y - OffByCell$PPS.x,
-                        ST = OffByCell$ST.x,
+  DiffOff <- data.frame(x = OffByCell$x,
+                        y = OffByCell$y,
+                        OffPPS= OffByCell$OffPPS - OffByCell$TotalPPS,
                         cid = OffByCell$cid,
-                        ST = OffByCell$ST.y)
+                        OffST = OffByCell$OffST)
   #make team comparisons
-  Comparison <- merge(DiffOff, DiffDeff, by = "cid", all = T)
-  Comparison <- Comparison[,-c(6:7)]
-  Comparison$Diff <- c(Comparison$PPS.x + Comparison$PPS.y)
-
-
-  PPSAA <- weighted.mean((Comparison$PPS.x + Comparison$PPS.y), Comparison$ST.x)
-
+  Comparison <- merge(DiffOff, DiffDeff, all = T)
+  Comparison$Diff <- c(Comparison$OffPPS + Comparison$DefPPS)
+  Comparison$ST <- (Comparison$OffST + Comparison$DefST)/2
 
   #Legend extractor
   g_legend <- function(a.gplot){
@@ -525,81 +530,81 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
 
   #Filter by quantile and focus
   if (focus == "all") {
-    DiffOff <- filter(DiffOff, ST > quantile(DiffOff$ST, probs = quant))
-    DiffOff$ST <- ifelse(DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                          ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                 ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                        ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    DiffOff <- filter(DiffOff, OffST > quantile(DiffOff$OffST, probs = quant))
+    DiffOff$OffST <- ifelse(DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                1))))
-    DiffDeff <- filter(DiffDeff, ST > quantile(DiffDeff$ST, probs = quant))
-    DiffDeff$ST <- ifelse(DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                          ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                 ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                        ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    DiffDeff <- filter(DiffDeff, DefST > quantile(DiffDeff$DefST, probs = quant))
+    DiffDeff$DefST <- ifelse(DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                1))))
-    Comparison <- filter(Comparison, ST.x > quantile(Comparison$ST.x, probs = quant))
-    Comparison$ST.x <- ifelse(Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                          ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                 ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                        ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    Comparison <- filter(Comparison, ST > quantile(Comparison$ST, probs = quant))
+    Comparison$ST <- ifelse(Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                1))))
   }
   if (focus == "plus"){
-    DiffOff <- filter(DiffOff, ST > quantile(DiffOff$ST, probs = quant))
-    DiffOff$ST <- ifelse(DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                         ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                       ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    DiffOff <- filter(DiffOff, OffST > quantile(DiffOff$OffST, probs = quant))
+    DiffOff$OffST <- ifelse(DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                         ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                       ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                               1))))
-    DiffDeff <- filter(DiffDeff, ST > quantile(DiffDeff$ST, probs = quant))
-    DiffDeff$ST <- ifelse(DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                          ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                 ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                        ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    DiffDeff <- filter(DiffDeff, DefST > quantile(DiffDeff$DefST, probs = quant))
+    DiffDeff$DefST <- ifelse(DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                1))))
-    Comparison <- filter(Comparison, ST.x > quantile(Comparison$ST.x, probs = quant))
+    Comparison <- filter(Comparison, ST > quantile(Comparison$ST, probs = quant))
     Comparison <- filter(Comparison, Diff >= 0)
-    Comparison$ST.x <- ifelse(Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                              ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                     ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                            ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    Comparison$ST <- ifelse(Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                              ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                     ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                            ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                    1))))
   }
 
   if (focus == "minus") {
-    DiffOff <- filter(DiffOff, ST > quantile(DiffOff$ST, probs = quant))
-    DiffOff$ST <- ifelse(DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                         ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                       ifelse(DiffOff$ST > quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$ST <= quantile(DiffOff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    DiffOff <- filter(DiffOff, OffST > quantile(DiffOff$OffST, probs = quant))
+    DiffOff$OffST <- ifelse(DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                         ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                       ifelse(DiffOff$OffST > quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffOff$OffST <= quantile(DiffOff$OffST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                               1))))
-    DiffDeff <- filter(DiffDeff, ST > quantile(DiffDeff$ST, probs = quant))
-    DiffDeff$ST <- ifelse(DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                          ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                 ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                        ifelse(DiffDeff$ST > quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$ST <= quantile(DiffDeff$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    DiffDeff <- filter(DiffDeff, DefST > quantile(DiffDeff$DefST, probs = quant))
+    DiffDeff$DefST <- ifelse(DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                          ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                 ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                        ifelse(DiffDeff$DefST > quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & DiffDeff$DefST <= quantile(DiffDeff$DefST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                1))))
-    Comparison <- filter(Comparison, ST.x > quantile(Comparison$ST.x, probs = quant))
+    Comparison <- filter(Comparison, ST > quantile(Comparison$ST, probs = quant))
     Comparison <- filter(Comparison, Diff <= 0)
-    Comparison$ST.x <- ifelse(Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
-                              ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
-                                     ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
-                                            ifelse(Comparison$ST.x > quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST.x <= quantile(Comparison$ST.x, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
+    Comparison$ST <- ifelse(Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2], 0.06,
+                              ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[2] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] , 0.12 ,
+                                     ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[3] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] , 0.25 ,
+                                            ifelse(Comparison$ST > quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[4] & Comparison$ST <= quantile(Comparison$ST, probs = c(0, 0.25, 0.5, 0.75, 0.9, 1))[5] , 0.5 ,
                                                    1))))
   }
   #Transform Hexbins into polygons
 
-  DFOFF <- hex_coord_df(DiffOff$x, DiffOff$y, (35*DiffOff$ST), (12*DiffOff$ST), size =1)
-  DFOFF$PPS <- rep(DiffOff$PPS, each = 6)
+  DFOFF <- hex_coord_df(DiffOff$x, DiffOff$y, (35*DiffOff$OffST), (12*DiffOff$OffST), size =1)
+  DFOFF$PPS <- rep(DiffOff$OffPPS, each = 6)
 
-  DFDEF <- hex_coord_df(DiffDeff$x, DiffDeff$y, 35*DiffDeff$ST, 12*DiffDeff$ST, size =1)
-  DFDEF$PPS <- rep(DiffDeff$PPS, each = 6)
+  DFDEF <- hex_coord_df(DiffDeff$x, DiffDeff$y, 35*DiffDeff$DefST, 12*DiffDeff$DefST, size =1)
+  DFDEF$PPS <- rep(DiffDeff$DefPPS, each = 6)
   #140 y 48 para 8 bins aprox
-  DFDIF <- hex_coord_df(Comparison$x.x, Comparison$y.x, (35*Comparison$ST.x),(12*Comparison$ST.x), size =1)
+  DFDIF <- hex_coord_df(Comparison$x, Comparison$y, (35*Comparison$ST),(12*Comparison$ST), size =1)
   DFDIF$Dif <- rep(Comparison$Diff, each = 6)
 
   #Create Legend
-  OFFLEG <- ggplot(DFOFF, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
+  OFFLEG <- ggplot(DFOFF, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
     coord_fixed()  +theme(line = element_blank(),
                           axis.title.x = element_blank(),
                           axis.title.y = element_blank(),
@@ -609,7 +614,7 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
                           plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))+ ylim(c(-40, 270)) + xlim(-250, 250)+ theme(legend.position="bottom") +  ggtitle(paste(OffTeam, "Offensive\n Shot Chart", sep = " "))
   leg<-g_legend(OFFLEG)
 
-  OFF <- ggplot(DFOFF, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS)) + scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
+  OFF <- ggplot(DFOFF, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS")) + scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
     coord_fixed()  +theme(line = element_blank(),
                           axis.title.x = element_blank(),
                           axis.title.y = element_blank(),
@@ -617,7 +622,7 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
                           axis.text.y = element_blank(),
                           legend.title = element_blank(),
                           plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270))+ theme(legend.position="none") + xlim(c(-250, 250)) +  ggtitle(paste(OffTeam, "Offensive\n Shot Chart", sep = " "))
-  DEF <- ggplot(DFDEF, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = PPS))+ scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
+  DEF <- ggplot(DFDEF, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "PPS"))+ scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
     coord_fixed()  +theme(line = element_blank(),
                           axis.title.x = element_blank(),
                           axis.title.y = element_blank(),
@@ -626,7 +631,7 @@ ShotComparisonGraph <-function(HomeTeam, VisitorTeam, Seasondata, nbins = 25, qu
                           legend.title = element_blank(),
                           plot.title = element_text(size = 17, lineheight = 1.2, face = "bold")) + ylim(c(-40, 270))+ xlim(c(-250, 250))+ theme(legend.position="none") + ggtitle(paste(DefTeam, "defensive\n Shot Chart", sep = " "))
 
-  COMP <- ggplot(DFDIF, aes(x=x, y = y))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes(group = id, fill = Dif)) + scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
+  COMP <- ggplot(DFDIF, aes_string(x="x", y = "y"))+ annotation_custom(court, -250, 250, -52, 418) + geom_polygon(aes_string(group = "id", fill = "Dif")) + scale_fill_gradient2(low ="blue", high = "red", limits=c(-1.4, 1.4)) +
     coord_fixed()  +theme(line = element_blank(),
                           axis.title.x = element_blank(),
                           axis.title.y = element_blank(),
