@@ -12,7 +12,7 @@ Description: The Spatialball package was built for the creation
     For more detailed analysis please contact the maintainer.
 URL: https://derek-corcoran-barrios.github.io/
 Depends: R (>= 2.10)
-Imports: caret, dplyr, hexbin, ggplot2, gridExtra, lubridate, magrittr, RColorBrewer, rjson
+Imports: caret, dplyr, hexbin, ggplot2, gridExtra, lubridate, magrittr, RColorBrewer, rjson, stringr, tidyr, purrr
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
